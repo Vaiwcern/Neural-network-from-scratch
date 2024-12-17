@@ -1,3 +1,27 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <algorithm>
+#include <numeric>
+#include <fstream>
+#include <cassert>
+
+using namespace std;
+
+#define CHECK(call)\
+{\
+	const cudaError_t error = call;\
+	if (error != cudaSuccess)\
+	{\
+		fprintf(stderr, "Error: %s:%d, ", __FILE__, __LINE__);\
+		fprintf(stderr, "code: %d, reason: %s\n", error,\
+				cudaGetErrorString(error));\
+		exit(EXIT_FAILURE);\
+	}\
+}
+
 struct GpuTimer
 {
     cudaEvent_t start;
@@ -34,3 +58,7 @@ struct GpuTimer
         return elapsed;
     }
 };
+
+int main() {
+    
+}
