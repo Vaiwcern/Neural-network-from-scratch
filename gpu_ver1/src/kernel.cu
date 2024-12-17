@@ -1,4 +1,4 @@
-#include "kernel.h"
+#include "Kernel.h"
 #include <cmath>
 
 __global__ void forward_kernel(float *input, float *output, float *weights, float *biases, int input_size, int output_size) {
