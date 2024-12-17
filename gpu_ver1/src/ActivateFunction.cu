@@ -1,4 +1,4 @@
-#include "ActivationFunction.h"
+#include "../header/ActivationFunction.h"
 #include <cmath>
 #include <cuda_runtime.h>
 

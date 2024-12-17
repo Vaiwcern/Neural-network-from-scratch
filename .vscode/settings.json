@@ -1,6 +1,11 @@
 {
     "files.associations": {
         "*.rmd": "markdown",
-        "vector": "cpp"
+        "vector": "cpp",
+        "fstream": "cpp",
+        "xstring": "cpp",
+        "cmath": "cpp",
+        "cstdlib": "cpp",
+        "iostream": "cpp"
     }
 }
