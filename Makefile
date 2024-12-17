@@ -1,12 +1,12 @@
 NVCC = nvcc
-
 TARGET = ann_cuda
 
-SRC = main1.cpp kernel.cu
+SRC = main.cpp kernel.cu loader.cpp ann_cpu.cpp
+HEADERS = loader.h ann_cpu.h
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
+$(TARGET): $(SRC) $(HEADERS)
 	$(NVCC) -o $(TARGET) $(SRC)
 
 clean:
