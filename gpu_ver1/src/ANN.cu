@@ -92,8 +92,11 @@ void ANN::eval(float* test_input, float* test_output, int test_size) {
         float* output = new float[layer3->output_size];
         forward(&test_input[i * layer1->input_size], output);
 
-        // Tính toán độ chính xác (so sánh output với test_output)
-        int predicted_label = std::distance(output, std::max_element(output, output + layer3->output_size));
+        // Chuyển output thành vector để sử dụng std::max_element và std::distance
+        std::vector<float> output_vector(output, output + layer3->output_size);
+
+        // Tính toán nhãn dự đoán
+        int predicted_label = std::distance(output_vector.begin(), std::max_element(output_vector.begin(), output_vector.end()));
         int actual_label = test_output[i];
 
         if (predicted_label == actual_label) {
@@ -106,6 +109,7 @@ void ANN::eval(float* test_input, float* test_output, int test_size) {
     float accuracy = (float)correct_predictions / test_size;
     std::cout << "Accuracy: " << accuracy * 100 << "%" << std::endl;
 }
+
 
 ANN::~ANN() {
     delete layer1;
