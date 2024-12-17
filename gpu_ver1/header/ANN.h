@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "DenseLayer.h"  // Để sử dụng lớp DenseLayer
-#include "ActivationFunction.h"  // Để sử dụng các lớp ActivationFunction
+#include "ActivateFunction.h"  // Để sử dụng các lớp ActivationFunction
 
 class ANN {
 public:
