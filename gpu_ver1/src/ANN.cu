@@ -1,4 +1,4 @@
-#include "../header/ANN.h"
+#include "ANN.h"
 #include <iostream>
 #include <cstdlib>
 #include <ctime>

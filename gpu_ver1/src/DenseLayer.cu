@@ -1,4 +1,4 @@
-#include "../header/DenseLayer.h"
+#include "DenseLayer.h"
 #include <cstdlib>
 #include <ctime>
 

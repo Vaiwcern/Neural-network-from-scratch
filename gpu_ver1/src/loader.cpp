@@ -1,4 +1,4 @@
-#include "../header/loader.h"
+#include "loader.h"
 
 static int32_t readInt(ifstream &f)
 {
