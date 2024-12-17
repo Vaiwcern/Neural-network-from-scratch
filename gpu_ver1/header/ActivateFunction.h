@@ -2,7 +2,7 @@
 #define ACTIVATION_FUNCTION_H
 
 #include <vector>
-#include "kernel.h"  // Để sử dụng các kernel trong lớp activation
+#include "Kernel.h"  // Để sử dụng các kernel trong lớp activation
 
 // Lớp cơ sở ActivationFunction
 class ActivationFunction {

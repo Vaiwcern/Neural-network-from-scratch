@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "ActivationFunction.h"  // Để sử dụng các lớp kích hoạt
-#include "kernel.h"  // Để sử dụng các kernel CUDA
+#include "Kernel.h"  // Để sử dụng các kernel CUDA
 
 class DenseLayer {
 public:
