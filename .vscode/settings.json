@@ -1,6 +1,11 @@
 {
     "files.associations": {
+        "*.embeddedhtml": "html",
+        "*.ejs": "html",
+        "*.py": "python",
+        "*.yaml": "yaml",
         "*.rmd": "markdown",
-        "vector": "cpp"
+        "vector": "cpp",
+        "iostream": "cpp"
     }
 }

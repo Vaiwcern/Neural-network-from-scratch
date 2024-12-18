@@ -1,28 +1,30 @@
-#ifndef DENSE_LAYER_H
-#define DENSE_LAYER_H
+#ifndef DENSELAYER_H
+#define DENSELAYER_H
 
-#include <vector>
-#include "ActivationFunction.h"  // Để sử dụng các lớp kích hoạt
-#include "Kernel.h"  // Để sử dụng các kernel CUDA
+#include "ActivationFunction.h"
 
 class DenseLayer {
 public:
-    int input_size, output_size;
-    float *weights, *biases;
-    ActivationFunction *activation;  // Con trỏ đến hàm kích hoạt (ReLU hoặc Softmax)
+    int input_size;
+    int output_size;
+    ActivationFunction* activation;
+
+    float* weights;
+    float* biases;
+
+    float* weight_gradients;
+    float* bias_gradients;
+
+    float* last_input;  // Giờ sẽ lưu cả batch input
+    float* last_output; // Lưu cả batch output
 
     DenseLayer(int input_size, int output_size, ActivationFunction* activation);
-    
-    // Phương thức forward pass
-    void forward(float* input, float* output);
 
-    // Phương thức backward pass (tính toán gradient)
-    void backward(float* input, float* output_gradient, float* weight_gradients, float* bias_gradients, int batch_size);
+    void forward(float* input, float* output, int batch_size);
+    void backward(float* output_gradient, float* input_gradient, int batch_size);
 
-    // Phương thức cập nhật trọng số
-    void update_weights(float* weight_gradients, float* bias_gradients, float learning_rate, int batch_size);
+    void update_weights(float learning_rate, int batch_size);
 
-    // Giải phóng bộ nhớ GPU
     ~DenseLayer();
 };
 
