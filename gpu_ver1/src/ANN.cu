@@ -70,17 +70,20 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             forward(&train_input[i * layer1->input_size], output);
 
             // Tính toán Cross-Entropy loss gradient song song cho tất cả các phần tử trong batch
-            float* d_loss;
-            CHECK(cudaMalloc(&d_loss, sizeof(float) * layer3->output_size));
-            CHECK(cudaMemset(d_loss, 0, sizeof(float) * layer3->output_size));
+            float* d_loss, d_gradient;
+            CHECK(cudaMalloc(&d_loss, sizeof(float)));
+            CHECK(cudaMalloc(&d_gradient, sizeof(float) * layer3->output_size));
+            
+            CHECK(cudaMemset(d_loss, 0, sizeof(float)));
+            CHECK(cudaMemset(d_gradient, 0, sizeof(float) * layer3->output_size));
     
             cross_entropy_loss_gradient_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
-                output, &train_output[i * layer3->output_size], d_loss, layer3->output_size
+                output, &train_output[i * layer3->output_size], d_loss, d_gradient, layer3->output_size
             );
-            // CHECK(cudaDeviceSynchronize());  // Đồng bộ hóa để đảm bảo kernel đã hoàn thành
+            CHECK(cudaDeviceSynchronize());  // Đồng bộ hóa để đảm bảo kernel đã hoàn thành
 
-            // float* gradient = new float[layer3->output_size];
-            // CHECK(cudaMemcpy(gradient, d_loss, sizeof(float) * layer3->output_size, cudaMemcpyDeviceToHost));
+            float* gradient = new float[layer3->output_size];
+            CHECK(cudaMemcpy(gradient, d_gradient, sizeof(float) * layer3->output_size, cudaMemcpyDeviceToHost));
 
             // Backward pass
             // backward(train_input, gradient, batch_size);
@@ -89,8 +92,9 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             // update_weights(gradient, gradient, batch_size);
 
             delete[] output;
-            // delete[] gradient;
+            delete[] gradient;
             CHECK(cudaFree(d_loss));  // Giải phóng bộ nhớ GPU
+            CHECK(cudaFree(d_gradient));
 
             break;
         }
