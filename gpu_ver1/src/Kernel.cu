@@ -71,3 +71,11 @@ __global__ void cross_entropy_loss_kernel(float* output, float* target, float* l
         atomicAdd(loss, result);  // Cộng dồn mất mát
     }
 }
+
+__global__ void cross_entropy_loss_gradient_kernel(float* output, float* target, float* gradient, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        // Tính toán gradient của Cross-Entropy Loss
+        gradient[idx] = output[idx] - target[idx];
+    }
+}
