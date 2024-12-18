@@ -93,8 +93,12 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             delete[] output;
             delete[] gradient;
             cudaFree(d_loss);  // Giải phóng bộ nhớ GPU
+
+            break;
         }
         std::cout << "Epoch " << epoch + 1 << " completed!" << std::endl;
+
+        break;
     }
 }
 

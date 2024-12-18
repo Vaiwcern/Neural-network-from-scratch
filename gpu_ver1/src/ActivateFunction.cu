@@ -1,43 +1,48 @@
 #include "ActivateFunction.h"
 #include <cmath>
+#include <iostream>
+#include <vector>
+#include <limits>
 #include <cuda_runtime.h>
+#include "CudaHelper.h"
 
 // Phương thức kích hoạt ReLU cho toàn bộ vector
 void ReLU::activate(float* input, float* output, int size) const {
     float *d_input, *d_output;
 
-    cudaMalloc(&d_input, size * sizeof(float));
-    cudaMalloc(&d_output, size * sizeof(float));
+    CHECK(cudaMalloc(&d_input, size * sizeof(float)));
+    CHECK(cudaMalloc(&d_output, size * sizeof(float)));
 
-    cudaMemcpy(d_input, input, size * sizeof(float), cudaMemcpyHostToDevice);
+    CHECK(cudaMemcpy(d_input, input, size * sizeof(float), cudaMemcpyHostToDevice));
 
     int blocks = (size + 255) / 256;
     relu_kernel<<<blocks, 256>>>(d_input, d_output, size);
     
-    cudaDeviceSynchronize();
+    CHECK(cudaDeviceSynchronize());
 
-    cudaMemcpy(output, d_output, size * sizeof(float), cudaMemcpyDeviceToHost);
+    CHECK(cudaMemcpy(output, d_output, size * sizeof(float), cudaMemcpyDeviceToHost));
 
-    cudaFree(d_input);
-    cudaFree(d_output);
+    CHECK(cudaFree(d_input));
+    CHECK(cudaFree(d_output));
 }
 
 // Phương thức kích hoạt Softmax cho toàn bộ vector
-void Softmax::activate(float* input, float* output, int size) const {
-    float *d_input, *d_output;
+void Softmax::activate(float* input, float* output, int size) {
+    // Tính giá trị max(x)
+    float max_val = -std::numeric_limits<float>::infinity();
+    for (int i = 0; i < size; ++i) {
+        max_val = std::max(max_val, input[i]);
+    }
 
-    cudaMalloc(&d_input, size * sizeof(float));
-    cudaMalloc(&d_output, size * sizeof(float));
+    // Tính e^(input[i] - max_val) và tính tổng
+    float sum_exp = 0.0f;
+    for (int i = 0; i < size; ++i) {
+        output[i] = std::exp(input[i] - max_val);
+        sum_exp += output[i];
+    }
 
-    cudaMemcpy(d_input, input, size * sizeof(float), cudaMemcpyHostToDevice);
-
-    int blocks = (size + 255) / 256;
-    softmax_kernel<<<blocks, 256>>>(d_input, d_output, size);
-
-    cudaDeviceSynchronize();
-
-    cudaMemcpy(output, d_output, size * sizeof(float), cudaMemcpyDeviceToHost);
-
-    cudaFree(d_input);
-    cudaFree(d_output);
+    // Chuẩn hóa Softmax
+    for (int i = 0; i < size; ++i) {
+        output[i] /= sum_exp;
+    }
 }

@@ -22,27 +22,6 @@ __global__ void relu_kernel(float *input, float *output, int size) {
     }
 }
 
-__global__ void softmax_kernel(float *input, float *output, int size) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < size) {
-        // Tính toán Softmax cho toàn bộ output
-        float max_val = -INFINITY;
-        for (int i = 0; i < size; ++i) {
-            max_val = max(max_val, input[i]);
-        }
-
-        // Tính e^(input[i] - max_val)
-        float sum_exp = 0.0f;
-        for (int i = 0; i < size; ++i) {
-            output[i] = exp(input[i] - max_val);
-            sum_exp += output[i];
-        }
-
-        // Chuẩn hóa Softmax
-        output[idx] /= sum_exp;
-    }
-}
-
 __global__ void backward_kernel(float *input, float *output_gradient, float *weights, float *weight_gradients, float *bias_gradients, int input_size, int output_size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < output_size) {
