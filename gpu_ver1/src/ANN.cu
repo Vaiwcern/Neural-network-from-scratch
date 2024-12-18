@@ -80,11 +80,24 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             float* d_output; 
             float* d_train_output;
 
+            cout << "IN THU OUTPUT: \n";
+            for (int j = 0; h < layer3->output_size; ++j) {
+                cout << output[j] << " ";
+            }
+            cout << "\n";
+
+            cout << "IN THU LABEL: \n";
+            for (int j = 0; j < layer3->output_size; ++j) {
+                cout << &train_output[i * layer3->output_size + j] << " ";
+            }
+            cout << "\n";
+
+            // Cấp phát bộ nhớ trên device
             CHECK(cudaMalloc(&d_output, sizeof(float) * layer3->output_size));
-            CHECK(cudaMemcpy(d_output, output, sizeof(float)  * layer3->output_size, cudaMemcpyHostToDevice));
+            CHECK(cudaMemcpy(d_output, output, sizeof(float) * layer3->output_size, cudaMemcpyHostToDevice));
 
             CHECK(cudaMalloc(&d_train_output, sizeof(float) * layer3->output_size));
-            CHECK(cudaMemcpy(d_train_output, &train_output[i * layer3->output_size], sizeof(float) * layer3->output_size), cudaMemcpyHostToDevice));
+            CHECK(cudaMemcpy(d_train_output, &train_output[i * layer3->output_size], sizeof(float) * layer3->output_size, cudaMemcpyHostToDevice));
 
             cross_entropy_loss_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
                 d_output, d_train_output, d_loss, d_gradient, layer3->output_size
@@ -105,6 +118,11 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             delete[] gradient;
             CHECK(cudaFree(d_loss));  // Giải phóng bộ nhớ GPU
             CHECK(cudaFree(d_gradient));
+            CHECK(cudaFree(d_loss));
+            CHECK(cudaFree(d_gradient));
+            CHECK(cudaFree(d_output));
+            CHECK(cudaFree(d_train_output));
+
 
             break;
         }
