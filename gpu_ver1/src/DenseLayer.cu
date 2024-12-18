@@ -26,7 +26,7 @@ DenseLayer::DenseLayer(int input_size, int output_size, ActivationFunction* acti
 
 // Phương thức forward pass
 void DenseLayer::forward(float* input, float* output) {
-    cout << "FORWARD LẦN 1:" << endl;
+    cout << "FORWARD LẦN " << ++counter << ":" << endl;
     cout << "Input size: " << input_size << ", Output size: " << output_size << endl;
     cout << "Weights matrix (input_size x output_size): " << input_size << " x " << output_size << endl;
 
@@ -45,6 +45,12 @@ void DenseLayer::forward(float* input, float* output) {
         }
         cout << endl;  // New line after each row
     }
+
+    cout << "Bias:" << endl;
+    for (int i = 0; i < output_size; ++i) {
+        cout << biases[i] << " ";
+    }
+    cout << endl;
 
     // Memory allocation and CUDA code for forward pass
     float *d_input, *d_output, *d_weights, *d_biases;
@@ -65,12 +71,8 @@ void DenseLayer::forward(float* input, float* output) {
     CHECK(cudaGetLastError());  // Check for kernel launch errors
     CHECK(cudaDeviceSynchronize());  // Ensure kernel execution is finished
 
-    cout << "-------HIHI---------" << "\n";
-
     // Apply activation function (ReLU or Softmax)
     activation->activate(d_output, d_output, output_size);
-
-    cout << "-------HIHI---------" << "\n";
 
     // Copy result back to host
     CHECK(cudaMemcpy(output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost));
