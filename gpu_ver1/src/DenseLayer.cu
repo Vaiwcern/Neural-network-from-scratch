@@ -2,6 +2,9 @@
 #include "CudaHelper.h"
 #include <cstdlib>
 #include <ctime>
+#include <iostream>
+
+using namespace std;
 
 // Constructor
 DenseLayer::DenseLayer(int input_size, int output_size, ActivationFunction* activation)
