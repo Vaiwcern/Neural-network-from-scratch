@@ -1,5 +1,6 @@
 #include "Kernel.h"
 #include <cmath>
+#include <float.h>
 
 __global__ void forward_kernel(float *input, float *output, float *weights, float *biases, int input_size, int output_size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -27,7 +28,7 @@ __global__ void softmax_kernel(float* input, float* output, int size) {
 
     if (idx < size) {
         // Tìm giá trị max(x) để cải thiện độ ổn định số học
-        float max_val = -std::numeric_limits<float>::infinity();
+        float max_val = -FLT_MAX;
         for (int i = 0; i < size; ++i) {
             max_val = fmaxf(max_val, input[i]);
         }
