@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <algorithm>
+#include <iterator>
 
 ANN::ANN(int input_size, int hidden_size, int output_size, float learning_rate) {
     // Khởi tạo các lớp DenseLayer với các lớp kích hoạt tương ứng
@@ -109,6 +111,7 @@ void ANN::eval(float* test_input, float* test_output, int test_size) {
     float accuracy = (float)correct_predictions / test_size;
     std::cout << "Accuracy: " << accuracy * 100 << "%" << std::endl;
 }
+
 
 
 ANN::~ANN() {
