@@ -65,8 +65,12 @@ void DenseLayer::forward(float* input, float* output) {
     CHECK(cudaGetLastError());  // Check for kernel launch errors
     CHECK(cudaDeviceSynchronize());  // Ensure kernel execution is finished
 
+    cout << "-------HIHI---------" << "\n";
+
     // Apply activation function (ReLU or Softmax)
     activation->activate(d_output, d_output, output_size);
+
+    cout << "-------HIHI---------" << "\n";
 
     // Copy result back to host
     CHECK(cudaMemcpy(output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost));
