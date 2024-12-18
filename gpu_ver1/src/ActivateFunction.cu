@@ -28,7 +28,7 @@ void ReLU::activate(float* input, float* output, int size) const {
 
 // Phương thức kích hoạt Softmax cho toàn bộ vector
 void Softmax::activate(float* input, float* output, int size) const {
-    // Tính giá trị max(x)
+    // Tính giá trị max(x) để cải thiện độ ổn định số học
     float max_val = -std::numeric_limits<float>::infinity();
     for (int i = 0; i < size; ++i) {
         max_val = std::max(max_val, input[i]);
@@ -41,7 +41,7 @@ void Softmax::activate(float* input, float* output, int size) const {
         sum_exp += output[i];
     }
 
-    // Chuẩn hóa Softmax
+    // Chuẩn hóa Softmax (chia cho tổng e^(input[i] - max_val))
     for (int i = 0; i < size; ++i) {
         output[i] /= sum_exp;
     }
