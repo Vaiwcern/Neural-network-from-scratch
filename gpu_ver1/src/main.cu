@@ -1,3 +1,11 @@
+#include <iostream>
+#include <vector>
+#include "loader.h"
+#include "ANN.h"  // Bao gồm lớp ANN
+#include "utils.h"
+
+using namespace std;
+
 int main() {
     // Đường dẫn đến các tệp dataset
     string image_file_train = "./data/train-images-idx3-ubyte";
