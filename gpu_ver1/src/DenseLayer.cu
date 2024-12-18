@@ -26,7 +26,7 @@ DenseLayer::DenseLayer(int input_size, int output_size, ActivationFunction* acti
 
 // Phương thức forward pass
 void DenseLayer::forward(float* input, float* output) {
-    cout << "FORWARD LẦN 1: "
+    cout << "FORWARD LẦN 1: ";
 
     // In input, weights, biases, và output trước khi vào kernel (trên host)
     cout << "Input: ";
