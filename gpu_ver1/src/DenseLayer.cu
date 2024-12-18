@@ -27,8 +27,6 @@ DenseLayer::DenseLayer(int input_size, int output_size, ActivationFunction* acti
 // Phương thức forward pass
 void DenseLayer::forward(float* input, float* output) {
     cout << "FORWARD LẦN 1:" << endl;
-
-    // Print input size and weights size for debugging
     cout << "Input size: " << input_size << ", Output size: " << output_size << endl;
     cout << "Weights matrix (input_size x output_size): " << input_size << " x " << output_size << endl;
 
@@ -61,32 +59,13 @@ void DenseLayer::forward(float* input, float* output) {
     CHECK(cudaMemcpy(d_weights, weights, input_size * output_size * sizeof(float), cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(d_biases, biases, output_size * sizeof(float), cudaMemcpyHostToDevice));
 
-    // Print the input and weights on the device (for debugging)
-    // Copy back to host and print
-    float* d_input_host = new float[input_size];
-    CHECK(cudaMemcpy(d_input_host, d_input, input_size * sizeof(float), cudaMemcpyDeviceToHost));
-    cout << "Device Input: ";
-    for (int i = 0; i < input_size; ++i) {
-        cout << d_input_host[i] << " ";
-    }
-    cout << endl;
-
-    float* d_weights_host = new float[input_size * output_size];
-    CHECK(cudaMemcpy(d_weights_host, d_weights, input_size * output_size * sizeof(float), cudaMemcpyDeviceToHost));
-    cout << "Device Weights (Matrix):" << endl;
-    for (int i = 0; i < output_size; ++i) {
-        for (int j = 0; j < input_size; ++j) {
-            cout << d_weights_host[i * input_size + j] << " ";
-        }
-        cout << endl;
-    }
-
     // Perform the forward pass with kernel
     int blocks = (output_size + 255) / 256;
     forward_kernel<<<blocks, 256>>>(d_input, d_output, d_weights, d_biases, input_size, output_size);
-    CHECK(cudaDeviceSynchronize());
+    CHECK(cudaGetLastError());  // Check for kernel launch errors
+    CHECK(cudaDeviceSynchronize());  // Ensure kernel execution is finished
 
-    // Apply activation function
+    // Apply activation function (ReLU or Softmax)
     activation->activate(d_output, d_output, output_size);
 
     // Copy result back to host
@@ -104,9 +83,8 @@ void DenseLayer::forward(float* input, float* output) {
     CHECK(cudaFree(d_output));
     CHECK(cudaFree(d_weights));
     CHECK(cudaFree(d_biases));
-    delete[] d_input_host;
-    delete[] d_weights_host;
 }
+
 
 // Phương thức backward pass (tính toán gradient)
 void DenseLayer::backward(float* input, float* output_gradient, float* weight_gradients, float* bias_gradients, int batch_size) {
