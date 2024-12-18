@@ -26,23 +26,29 @@ void ReLU::activate(float* input, float* output, int size) const {
     CHECK(cudaFree(d_output));
 }
 
-// Phương thức kích hoạt Softmax cho toàn bộ vector
 void Softmax::activate(float* input, float* output, int size) const {
-    // Tính giá trị max(x) để cải thiện độ ổn định số học
-    float max_val = -std::numeric_limits<float>::infinity();
-    for (int i = 0; i < size; ++i) {
-        max_val = std::max(max_val, input[i]);
-    }
+    // Tạo bộ nhớ trên device
+    float* d_input;
+    float* d_output;
 
-    // Tính e^(input[i] - max_val) và tính tổng
-    float sum_exp = 0.0f;
-    for (int i = 0; i < size; ++i) {
-        output[i] = std::exp(input[i] - max_val);
-        sum_exp += output[i];
-    }
+    CHECK(cudaMalloc(&d_input, size * sizeof(float)));
+    CHECK(cudaMalloc(&d_output, size * sizeof(float)));
 
-    // Chuẩn hóa Softmax (chia cho tổng e^(input[i] - max_val))
-    for (int i = 0; i < size; ++i) {
-        output[i] /= sum_exp;
-    }
+    // Sao chép dữ liệu từ host vào device
+    CHECK(cudaMemcpy(d_input, input, size * sizeof(float), cudaMemcpyHostToDevice));
+
+    // Thực thi kernel
+    int block_size = 256;  // Kích thước block
+    int num_blocks = (size + block_size - 1) / block_size;  // Tính số block
+
+    softmax_kernel<<<num_blocks, block_size>>>(d_input, d_output, size);
+    CHECK(cudaDeviceSynchronize());  // Đồng bộ hóa để đảm bảo kernel đã hoàn thành
+
+    // Sao chép kết quả từ device về host
+    CHECK(cudaMemcpy(output, d_output, size * sizeof(float), cudaMemcpyDeviceToHost));
+
+    // Giải phóng bộ nhớ trên device
+    CHECK(cudaFree(d_input));
+    CHECK(cudaFree(d_output));
 }
+
