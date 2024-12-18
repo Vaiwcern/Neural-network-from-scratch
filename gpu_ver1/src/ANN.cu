@@ -90,7 +90,7 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
 
             cout << "IN THU LABEL: \n";
             for (int j = 0; j < layer3->output_size; ++j) {
-                cout << &train_output[i * layer3->output_size + j] << " ";
+                cout << train_output[i * layer3->output_size + j] << " ";
             }
             cout << "\n";
 
