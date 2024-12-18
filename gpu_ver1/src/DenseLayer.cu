@@ -26,67 +26,86 @@ DenseLayer::DenseLayer(int input_size, int output_size, ActivationFunction* acti
 
 // Phương thức forward pass
 void DenseLayer::forward(float* input, float* output) {
-    cout << "FORWARD LẦN 1: ";
+    cout << "FORWARD LẦN 1:" << endl;
 
-    // In input, weights, biases, và output trước khi vào kernel (trên host)
+    // Print input size and weights size for debugging
+    cout << "Input size: " << input_size << ", Output size: " << output_size << endl;
+    cout << "Weights matrix (input_size x output_size): " << input_size << " x " << output_size << endl;
+
+    // Print input values for debugging
     cout << "Input: ";
     for (int i = 0; i < input_size; ++i) {
         cout << input[i] << " ";
     }
     cout << endl;
 
-    // In weights dưới dạng ma trận (input_size x output_size)
+    // Print weights matrix (for debugging)
     cout << "Weights (Matrix):" << endl;
-    for (int i = 0; i < output_size; ++i) {  // Duyệt qua các hàng (output_size)
-        for (int j = 0; j < input_size; ++j) {  // Duyệt qua các cột (input_size)
-            cout << weights[i * input_size + j] << " ";  // In phần tử [i, j] trong ma trận
+    for (int i = 0; i < output_size; ++i) {  // Loop through rows (output_size)
+        for (int j = 0; j < input_size; ++j) {  // Loop through columns (input_size)
+            cout << weights[i * input_size + j] << " ";  // Print element at [i, j]
         }
-        cout << endl;  // Xuống dòng sau mỗi hàng
+        cout << endl;  // New line after each row
     }
 
-    cout << "Biases: ";
-    for (int i = 0; i < output_size; ++i) {
-        cout << biases[i] << " ";
-    }
-    cout << endl;
-
-
+    // Memory allocation and CUDA code for forward pass
     float *d_input, *d_output, *d_weights, *d_biases;
 
-    // Cấp phát bộ nhớ trên device (GPU)
     CHECK(cudaMalloc(&d_input, input_size * sizeof(float)));
     CHECK(cudaMalloc(&d_output, output_size * sizeof(float)));
     CHECK(cudaMalloc(&d_weights, input_size * output_size * sizeof(float)));
     CHECK(cudaMalloc(&d_biases, output_size * sizeof(float)));
 
-    // Sao chép dữ liệu từ host (CPU) vào device (GPU)
+    // Copy data to device
     CHECK(cudaMemcpy(d_input, input, input_size * sizeof(float), cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(d_weights, weights, input_size * output_size * sizeof(float), cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(d_biases, biases, output_size * sizeof(float), cudaMemcpyHostToDevice));
 
-    // Tính toán forward pass (tính tổng có trọng số và độ chệch)
+    // Print the input and weights on the device (for debugging)
+    // Copy back to host and print
+    float* d_input_host = new float[input_size];
+    CHECK(cudaMemcpy(d_input_host, d_input, input_size * sizeof(float), cudaMemcpyDeviceToHost));
+    cout << "Device Input: ";
+    for (int i = 0; i < input_size; ++i) {
+        cout << d_input_host[i] << " ";
+    }
+    cout << endl;
+
+    float* d_weights_host = new float[input_size * output_size];
+    CHECK(cudaMemcpy(d_weights_host, d_weights, input_size * output_size * sizeof(float), cudaMemcpyDeviceToHost));
+    cout << "Device Weights (Matrix):" << endl;
+    for (int i = 0; i < output_size; ++i) {
+        for (int j = 0; j < input_size; ++j) {
+            cout << d_weights_host[i * input_size + j] << " ";
+        }
+        cout << endl;
+    }
+
+    // Perform the forward pass with kernel
     int blocks = (output_size + 255) / 256;
     forward_kernel<<<blocks, 256>>>(d_input, d_output, d_weights, d_biases, input_size, output_size);
-    CHECK(cudaDeviceSynchronize());  // Đồng bộ hóa để đảm bảo kernel đã hoàn thành
+    CHECK(cudaDeviceSynchronize());
 
-    // Áp dụng hàm kích hoạt (ReLU hoặc Softmax)
+    // Apply activation function
     activation->activate(d_output, d_output, output_size);
 
-    // Sao chép kết quả từ device về host
+    // Copy result back to host
     CHECK(cudaMemcpy(output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost));
 
-    // In kết quả output sau khi tính toán
+    // Print output for debugging
     cout << "Output: ";
     for (int i = 0; i < output_size; ++i) {
         cout << output[i] << " ";
     }
     cout << endl;
 
-    // Giải phóng bộ nhớ trên device
+    // Free memory
     CHECK(cudaFree(d_input));
     CHECK(cudaFree(d_output));
     CHECK(cudaFree(d_weights));
     CHECK(cudaFree(d_biases));
+    delete[] d_input_host;
+    delete[] d_weights_host;
 }
 
 // Phương thức backward pass (tính toán gradient)
