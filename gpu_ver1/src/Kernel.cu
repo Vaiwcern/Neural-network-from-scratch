@@ -62,3 +62,12 @@ __global__ void update_weights_kernel(float *weights, float *weight_gradients, f
         biases[idx] -= learning_rate * bias_gradients[idx];
     }
 }
+
+__global__ void cross_entropy_loss_kernel(float* output, float* target, float* loss, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        // Mỗi thread tính loss cho một phần tử
+        float result = -target[idx] * log(output[idx]);  // Tính mất mát cho phần tử idx
+        atomicAdd(loss, result);  // Cộng dồn mất mát
+    }
+}

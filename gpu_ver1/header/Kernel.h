@@ -16,4 +16,10 @@ __global__ void relu_kernel(float *input, float *output, int size);
 // Kernel CUDA cho Softmax activation
 __global__ void softmax_kernel(float *input, float *output, int size);
 
+
+// Kernel tính toán Cross-Entropy Loss
+__global__ void cross_entropy_loss_kernel(float* output, float* target, float* loss, int size);
+
+__global__ void cross_entropy_loss_gradient_kernel(float* output, float* target, float* gradient, int size);
+
 #endif

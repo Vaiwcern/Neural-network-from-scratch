@@ -63,25 +63,36 @@ void ANN::update_weights(float* weight_gradients, float* bias_gradients, int bat
 
 void ANN::train(float* train_input, float* train_output, int batch_size, int epochs) {
     for (int epoch = 0; epoch < epochs; ++epoch) {
-        // Giả sử train_input và train_output đã được chia thành các batch
-        for (int i = 0; i < batch_size; ++i) {
+        for (int i = 0; i < train_data.num_samples; i += batch_size) {
             // Forward pass
             float* output = new float[layer3->output_size];
             forward(&train_input[i * layer1->input_size], output);
 
-            // Tính toán gradient (có thể sử dụng mất mát như CrossEntropy)
+            // Tính toán gradient loss (Cross-Entropy)
             float* output_gradient = new float[layer3->output_size];
-            // Tính toán gradient ở lớp đầu ra
-            // output_gradient = softmax_loss(output, train_output[i]);
+
+            // Tính toán Cross-Entropy loss gradient song song cho tất cả các phần tử trong batch
+            float* d_loss;
+            cudaMalloc(&d_loss, sizeof(float) * layer3->output_size);
+            cudaMemset(d_loss, 0, sizeof(float) * layer3->output_size);
+
+            cross_entropy_loss_gradient_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
+                output, &train_output[i * layer3->output_size], d_loss, layer3->output_size
+            );
+            cudaDeviceSynchronize();  // Đồng bộ hóa để đảm bảo kernel đã hoàn thành
+
+            float* gradient = new float[layer3->output_size];
+            cudaMemcpy(gradient, d_loss, sizeof(float) * layer3->output_size, cudaMemcpyDeviceToHost);
 
             // Backward pass
-            backward(train_input, output_gradient, batch_size);
+            backward(train_input, gradient, batch_size);
 
             // Cập nhật trọng số và độ chệch
-            update_weights(output_gradient, output_gradient, batch_size);
+            update_weights(gradient, gradient, batch_size);
 
             delete[] output;
-            delete[] output_gradient;
+            delete[] gradient;
+            cudaFree(d_loss);  // Giải phóng bộ nhớ GPU
         }
         std::cout << "Epoch " << epoch + 1 << " completed!" << std::endl;
     }
