@@ -1,11 +1,3 @@
-#include <iostream>
-#include <vector>
-#include "loader.h"
-#include "ANN.h"  // Bao gồm lớp ANN
-#include "utils.h"
-
-using namespace std;
-
 int main() {
     // Đường dẫn đến các tệp dataset
     string image_file_train = "./data/train-images-idx3-ubyte";
@@ -25,6 +17,14 @@ int main() {
     float* test_images = new float[test_data.num_samples * test_data.image_size];
     normalize_data(test_data.images, test_images, test_data.num_samples, test_data.image_size);
 
+    // Chuẩn hóa nhãn cho huấn luyện
+    float* train_labels = new float[train_data.num_samples];
+    normalize_labels(train_data.labels, train_labels, train_data.num_samples);
+
+    // Chuẩn hóa nhãn cho kiểm tra
+    float* test_labels = new float[test_data.num_samples];
+    normalize_labels(test_data.labels, test_labels, test_data.num_samples);
+
     // Khởi tạo ANN model
     int input_size = 784;  // 28x28 pixels
     int hidden_size = 128;  // Số nơ-ron trong lớp ẩn
@@ -39,14 +39,16 @@ int main() {
     ANN ann(input_size, hidden_size, output_size, learning_rate);
     
     // Huấn luyện mô hình với dữ liệu huấn luyện
-    ann.train(train_images, train_data.labels.data(), batch_size, num_epochs);
+    ann.train(train_images, train_labels, batch_size, num_epochs);
 
     // Đánh giá mô hình trên bộ dữ liệu kiểm tra
-    ann.eval(test_images, test_data.labels.data(), test_data.num_samples);
+    ann.eval(test_images, test_labels, test_data.num_samples);
 
     // Giải phóng bộ nhớ
     delete[] train_images;
     delete[] test_images;
+    delete[] train_labels;
+    delete[] test_labels;
 
     return 0;
 }
