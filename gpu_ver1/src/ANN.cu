@@ -89,7 +89,7 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             // update_weights(gradient, gradient, batch_size);
 
             delete[] output;
-            delete[] gradient;
+            // delete[] gradient;
             CHECK(cudaFree(d_loss));  // Giải phóng bộ nhớ GPU
 
             break;
