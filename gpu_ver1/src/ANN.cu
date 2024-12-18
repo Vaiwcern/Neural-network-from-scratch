@@ -77,14 +77,18 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             CHECK(cudaMemset(d_loss, 0, sizeof(float)));
             CHECK(cudaMemset(d_gradient, 0, sizeof(float) * layer3->output_size));
     
-            cross_entropy_loss_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
-                output, &train_output[i * layer3->output_size], d_loss, d_gradient, layer3->output_size
-            );
+            float* d_output; 
+            float* d_train_output;
 
-            cudaError_t error = cudaGetLastError();
-            if (error != cudaSuccess) {
-                printf("CUDA error in kernel: %s\n", cudaGetErrorString(error));
-            }
+            CHECK(cudaMalloc(&d_output, sizeof(float) * layer3->output_size));
+            CHECK(cudaMemcpy(d_output, output, sizeof(float)  * layer3->output_size, cudaMemcpyHostToDevice));
+
+            CHECK(cudaMalloc(&d_train_output, sizeof(float) * layer3->output_size));
+            CHECK(cudaMemcpy(d_train_output, &train_output[i * layer3->output_size], sizeof(float) * layer3->output_size), cudaMemcpyHostToDevice));
+
+            cross_entropy_loss_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
+                d_output, d_train_output, d_loss, d_gradient, layer3->output_size
+            );
 
             CHECK(cudaDeviceSynchronize());  // Đồng bộ hóa để đảm bảo kernel đã hoàn thành
 
