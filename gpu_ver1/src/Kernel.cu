@@ -81,10 +81,12 @@ __global__ void cross_entropy_loss_kernel(float* output, float* target, float* l
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
         // Tính toán mất mát (loss) cho mỗi phần tử (cross-entropy)
-        float result = -target[idx];// * log(output[idx]);  // Tính mất mát cho phần tử idx
+        // float result = -target[idx];// * log(output[idx]);  // Tính mất mát cho phần tử idx
         // float result = log(output[idx]);
+        float result = 0;
         atomicAdd(loss, result);  // Cộng dồn mất mát
-        gradient[idx] = output[idx] - target[idx];  // Gradient cho Cross-Entropy loss (sau softmax)
+        // gradient[idx] = output[idx] - target[idx];  // Gradient cho Cross-Entropy loss (sau softmax)
+        gradient[idx] = 0;
     }
 }
 
