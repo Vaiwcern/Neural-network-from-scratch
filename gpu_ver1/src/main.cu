@@ -34,7 +34,7 @@ int main() {
     normalize_labels(test_data.labels, test_labels, test_data.num_samples);
 
 
-    train_images = [0.1, 0.2, 0.3, 0.4, 0.5];
+    train_images = {0.1, 0.2, 0.3, 0.4, 0.5};
 
 
     // Khởi tạo ANN model
