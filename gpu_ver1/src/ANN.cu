@@ -80,6 +80,12 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             cross_entropy_loss_gradient_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
                 output, &train_output[i * layer3->output_size], d_loss, d_gradient, layer3->output_size
             );
+            
+            cudaError_t error = cudaGetLastError();
+            if (error != cudaSuccess) {
+                printf("CUDA error in kernel: %s\n", cudaGetErrorString(error));
+            }
+
             CHECK(cudaDeviceSynchronize());  // Đồng bộ hóa để đảm bảo kernel đã hoàn thành
 
             float* gradient = new float[layer3->output_size];

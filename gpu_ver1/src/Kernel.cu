@@ -80,10 +80,10 @@ __global__ void update_weights_kernel(float *weights, float *weight_gradients, f
 __global__ void cross_entropy_loss_kernel(float* output, float* target, float* loss, float* gradient, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
-        // Mỗi thread tính loss cho một phần tử
+        // Tính toán mất mát (loss) cho mỗi phần tử (cross-entropy)
         float result = -target[idx] * log(output[idx]);  // Tính mất mát cho phần tử idx
         atomicAdd(loss, result);  // Cộng dồn mất mát
-        gradient[idx] = result;
+        gradient[idx] = output[idx] - target[idx];  // Gradient cho Cross-Entropy loss (sau softmax)
     }
 }
 
