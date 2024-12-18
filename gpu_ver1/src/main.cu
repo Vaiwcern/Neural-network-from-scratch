@@ -40,7 +40,9 @@ int main() {
     train_images[3] = 0.4f;
     train_images[4] = 0.5f;
 
-
+    train_labels[0] = 0.0f;
+    train_labels[0] = 1.0f;
+    train_labels[0] = 0.0f;
 
     // Khởi tạo ANN model
     int input_size = 5;  // 28x28 pixels
