@@ -26,11 +26,11 @@ int main() {
     normalize_data(test_data.images, test_images, test_data.num_samples, test_data.image_size);
 
     // Chuẩn hóa nhãn cho huấn luyện
-    float* train_labels = new float[train_data.num_samples];
+    float* train_labels = new float[train_data.num_samples * 10];  // One-hot encoding
     normalize_labels(train_data.labels, train_labels, train_data.num_samples);
 
     // Chuẩn hóa nhãn cho kiểm tra
-    float* test_labels = new float[test_data.num_samples];
+    float* test_labels = new float[test_data.num_samples * 10];  // One-hot encoding
     normalize_labels(test_data.labels, test_labels, test_data.num_samples);
 
     // Khởi tạo ANN model
@@ -47,7 +47,7 @@ int main() {
     ANN ann(input_size, hidden_size, output_size, learning_rate);
     
     // Huấn luyện mô hình với dữ liệu huấn luyện
-    ann.train(train_images, train_labels, batch_size, num_epochs);
+    ann.train(train_images, train_labels, train_data.num_samples, batch_size, num_epochs);
 
     // Đánh giá mô hình trên bộ dữ liệu kiểm tra
     ann.eval(test_images, test_labels, test_data.num_samples);

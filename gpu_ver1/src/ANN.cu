@@ -61,9 +61,9 @@ void ANN::update_weights(float* weight_gradients, float* bias_gradients, int bat
     layer3->update_weights(weight_gradients, bias_gradients, learning_rate, batch_size);
 }
 
-void ANN::train(float* train_input, float* train_output, int batch_size, int epochs) {
+void ANN::train(float* train_input, float* train_output, int num_samples, int batch_size, int epochs) {
     for (int epoch = 0; epoch < epochs; ++epoch) {
-        for (int i = 0; i < train_data.num_samples; i += batch_size) {
+        for (int i = 0; i < num_samples; i += batch_size) {
             // Forward pass
             float* output = new float[layer3->output_size];
             forward(&train_input[i * layer1->input_size], output);
@@ -98,6 +98,7 @@ void ANN::train(float* train_input, float* train_output, int batch_size, int epo
     }
 }
 
+
 void ANN::eval(float* test_input, float* test_output, int test_size) {
     int correct_predictions = 0;
     for (int i = 0; i < test_size; ++i) {
@@ -122,6 +123,7 @@ void ANN::eval(float* test_input, float* test_output, int test_size) {
     float accuracy = (float)correct_predictions / test_size;
     std::cout << "Accuracy: " << accuracy * 100 << "%" << std::endl;
 }
+
 
 
 

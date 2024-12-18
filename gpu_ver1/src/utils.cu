@@ -15,6 +15,10 @@ void normalize_data(vector<unsigned char>& images, float* output, int num_sample
 
 void normalize_labels(vector<unsigned char>& labels, float* output, int num_samples) {
     for (int i = 0; i < num_samples; ++i) {
-        output[i] = (float)labels[i];  // Chuyển nhãn từ unsigned char sang float
+        // Chuyển nhãn thành one-hot encoding
+        int label = labels[i];
+        for (int j = 0; j < 10; ++j) {
+            output[i * 10 + j] = (j == label) ? 1.0f : 0.0f;
+        }
     }
 }

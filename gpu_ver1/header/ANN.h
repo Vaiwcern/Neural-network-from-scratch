@@ -26,7 +26,7 @@ public:
     void update_weights(float* weight_gradients, float* bias_gradients, int batch_size);
 
     // Phương thức huấn luyện ANN
-    void train(float* train_input, float* train_output, int batch_size, int epochs);
+    void train(float* train_input, float* train_output, int num_samples, int batch_size, int epochs);
 
     // Phương thức đánh giá mô hình (eval)
     void eval(float* test_input, float* test_output, int test_size);
