@@ -68,31 +68,31 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             float* output = new float[layer3->output_size];
             forward(&train_input[i * layer1->input_size], output);
 
-            // Tính toán gradient loss (Cross-Entropy)
-            float* output_gradient = new float[layer3->output_size];
+            // // Tính toán gradient loss (Cross-Entropy)
+            // float* output_gradient = new float[layer3->output_size];
 
-            // Tính toán Cross-Entropy loss gradient song song cho tất cả các phần tử trong batch
-            float* d_loss;
-            cudaMalloc(&d_loss, sizeof(float) * layer3->output_size);
-            cudaMemset(d_loss, 0, sizeof(float) * layer3->output_size);
+            // // Tính toán Cross-Entropy loss gradient song song cho tất cả các phần tử trong batch
+            // float* d_loss;
+            // cudaMalloc(&d_loss, sizeof(float) * layer3->output_size);
+            // cudaMemset(d_loss, 0, sizeof(float) * layer3->output_size);
 
-            cross_entropy_loss_gradient_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
-                output, &train_output[i * layer3->output_size], d_loss, layer3->output_size
-            );
-            cudaDeviceSynchronize();  // Đồng bộ hóa để đảm bảo kernel đã hoàn thành
+            // cross_entropy_loss_gradient_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
+            //     output, &train_output[i * layer3->output_size], d_loss, layer3->output_size
+            // );
+            // cudaDeviceSynchronize();  // Đồng bộ hóa để đảm bảo kernel đã hoàn thành
 
-            float* gradient = new float[layer3->output_size];
-            cudaMemcpy(gradient, d_loss, sizeof(float) * layer3->output_size, cudaMemcpyDeviceToHost);
+            // float* gradient = new float[layer3->output_size];
+            // cudaMemcpy(gradient, d_loss, sizeof(float) * layer3->output_size, cudaMemcpyDeviceToHost);
 
-            // Backward pass
-            backward(train_input, gradient, batch_size);
+            // // Backward pass
+            // backward(train_input, gradient, batch_size);
 
-            // Cập nhật trọng số và độ chệch
-            update_weights(gradient, gradient, batch_size);
+            // // Cập nhật trọng số và độ chệch
+            // update_weights(gradient, gradient, batch_size);
 
             delete[] output;
-            delete[] gradient;
-            cudaFree(d_loss);  // Giải phóng bộ nhớ GPU
+            // delete[] gradient;
+            // cudaFree(d_loss);  // Giải phóng bộ nhớ GPU
 
             break;
         }
