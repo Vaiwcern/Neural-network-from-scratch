@@ -79,12 +79,34 @@ __global__ void update_weights_kernel(float *weights, float *weight_gradients, f
 
 __global__ void cross_entropy_loss_kernel(float* output, float* target, float* loss, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    // Shared memory to store partial sums within each block
+    __shared__ float shared_loss[256];  // Assuming max block size is 256 threads
+    
+    float result = 0.0f;
+    
     if (idx < size) {
-        // Mỗi thread tính loss cho một phần tử
-        float result = -target[idx] * log(output[idx]);  // Tính mất mát cho phần tử idx
-        atomicAdd(loss, result);  // Cộng dồn mất mát
+        result = -target[idx] * log(output[idx]);  // Compute loss for element idx
+    }
+
+    // Store the result in shared memory
+    shared_loss[threadIdx.x] = result;
+    __syncthreads();
+
+    // Perform reduction in shared memory to calculate the sum of losses within each block
+    for (int stride = blockDim.x / 2; stride > 0; stride /= 2) {
+        if (threadIdx.x < stride) {
+            shared_loss[threadIdx.x] += shared_loss[threadIdx.x + stride];
+        }
+        __syncthreads();  // Ensure all threads synchronize after each reduction step
+    }
+
+    // Only thread 0 in each block writes the result to the global memory
+    if (threadIdx.x == 0) {
+        atomicAdd(loss, shared_loss[0]);
     }
 }
+
 
 __global__ void cross_entropy_loss_gradient_kernel(float* output, float* target, float* gradient, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;

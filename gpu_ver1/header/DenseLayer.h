@@ -9,7 +9,6 @@ class DenseLayer {
 public:
     int input_size, output_size;
     float *weights, *biases;
-    int counter = 0;
     ActivationFunction *activation;  // Con trỏ đến hàm kích hoạt (ReLU hoặc Softmax)
 
     DenseLayer(int input_size, int output_size, ActivationFunction* activation);

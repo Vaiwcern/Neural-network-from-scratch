@@ -6,6 +6,8 @@
 
 using namespace std;
 
+int counter = 0;
+
 // Constructor
 DenseLayer::DenseLayer(int input_size, int output_size, ActivationFunction* activation)
     : input_size(input_size), output_size(output_size), activation(activation) 
@@ -27,18 +29,18 @@ DenseLayer::DenseLayer(int input_size, int output_size, ActivationFunction* acti
 // Phương thức forward pass
 void DenseLayer::forward(float* input, float* output) {
     cout << "FORWARD LẦN " << ++counter << ":" << endl;
-    cout << "Input size: " << input_size << ", Output size: " << output_size << endl;
-    cout << "Weights matrix (input_size x output_size): " << input_size << " x " << output_size << endl;
+    cout << "- Input size: " << input_size << ", Output size: " << output_size << endl;
+    cout << "- Weights matrix (input_size x output_size): " << input_size << " x " << output_size << endl;
 
     // Print input values for debugging
-    cout << "Input: ";
+    cout << "- Input: ";
     for (int i = 0; i < input_size; ++i) {
         cout << input[i] << " ";
     }
     cout << endl;
 
     // Print weights matrix (for debugging)
-    cout << "Weights (Matrix):" << endl;
+    cout << "- Weights (Matrix):" << endl;
     for (int i = 0; i < output_size; ++i) {  // Loop through rows (output_size)
         for (int j = 0; j < input_size; ++j) {  // Loop through columns (input_size)
             cout << weights[i * input_size + j] << " ";  // Print element at [i, j]
@@ -46,7 +48,7 @@ void DenseLayer::forward(float* input, float* output) {
         cout << endl;  // New line after each row
     }
 
-    cout << "Bias:" << endl;
+    cout << "- Bias:" << endl;
     for (int i = 0; i < output_size; ++i) {
         cout << biases[i] << " ";
     }
@@ -78,7 +80,7 @@ void DenseLayer::forward(float* input, float* output) {
     CHECK(cudaMemcpy(output, d_output, output_size * sizeof(float), cudaMemcpyDeviceToHost));
 
     // Print output for debugging
-    cout << "Output: ";
+    cout << "- Output: ";
     for (int i = 0; i < output_size; ++i) {
         cout << output[i] << " ";
     }
@@ -89,6 +91,8 @@ void DenseLayer::forward(float* input, float* output) {
     CHECK(cudaFree(d_output));
     CHECK(cudaFree(d_weights));
     CHECK(cudaFree(d_biases));
+
+    cout << endl;
 }
 
 
