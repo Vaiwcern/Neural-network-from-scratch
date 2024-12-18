@@ -6,6 +6,8 @@
 #include <iterator>
 #include "CudaHelper.h"
 
+using namespace std;
+
 ANN::ANN(int input_size, int hidden_size, int output_size, float learning_rate) {
     // Khởi tạo các lớp DenseLayer với các lớp kích hoạt tương ứng
     layer1 = new DenseLayer(input_size, hidden_size, new ReLU());  // Lớp ẩn 1 với ReLU
@@ -81,7 +83,7 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             float* d_train_output;
 
             cout << "IN THU OUTPUT: \n";
-            for (int j = 0; h < layer3->output_size; ++j) {
+            for (int j = 0; j < layer3->output_size; ++j) {
                 cout << output[j] << " ";
             }
             cout << "\n";
