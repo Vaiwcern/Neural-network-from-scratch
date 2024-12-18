@@ -1,4 +1,4 @@
-#include "GpuTimer.h"
+#include "GPUTimer.h"
 #include <cuda_runtime.h>  // Thêm thư viện CUDA runtime
 
 GpuTimer::GpuTimer()
