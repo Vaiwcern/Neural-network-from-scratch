@@ -18,7 +18,7 @@ __global__ void softmax_kernel(float *input, float *output, int size);
 
 
 // Kernel tính toán Cross-Entropy Loss
-__global__ void cross_entropy_loss_kernel(float* output, float* target, float* loss, float* gradient, int size)
+__global__ void cross_entropy_loss_kernel(float* output, float* target, float* loss, float* gradient, int size);
 
 __global__ void cross_entropy_loss_gradient_kernel(float* output, float* target, float* gradient, int size);
 
