@@ -70,17 +70,17 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             forward(&train_input[i * layer1->input_size], output);
 
             // Tính toán Cross-Entropy loss gradient song song cho tất cả các phần tử trong batch
-            float* d_loss, d_gradient;
+            float* d_loss, *d_gradient;
             CHECK(cudaMalloc(&d_loss, sizeof(float)));
             CHECK(cudaMalloc(&d_gradient, sizeof(float) * layer3->output_size));
             
             CHECK(cudaMemset(d_loss, 0, sizeof(float)));
             CHECK(cudaMemset(d_gradient, 0, sizeof(float) * layer3->output_size));
     
-            cross_entropy_loss_gradient_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
+            cross_entropy_loss_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
                 output, &train_output[i * layer3->output_size], d_loss, d_gradient, layer3->output_size
             );
-            
+
             cudaError_t error = cudaGetLastError();
             if (error != cudaSuccess) {
                 printf("CUDA error in kernel: %s\n", cudaGetErrorString(error));
