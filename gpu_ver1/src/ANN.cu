@@ -74,13 +74,13 @@ void ANN::train(float* train_input, float* train_output, int num_samples, int ba
             CHECK(cudaMalloc(&d_loss, sizeof(float) * layer3->output_size));
             CHECK(cudaMemset(d_loss, 0, sizeof(float) * layer3->output_size));
     
-            cross_entropy_loss_gradient_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
-                output, &train_output[i * layer3->output_size], d_loss, layer3->output_size
-            );
-            CHECK(cudaDeviceSynchronize());  // Đồng bộ hóa để đảm bảo kernel đã hoàn thành
+            // cross_entropy_loss_gradient_kernel<<<(layer3->output_size + 255) / 256, 256>>>(
+            //     output, &train_output[i * layer3->output_size], d_loss, layer3->output_size
+            // );
+            // CHECK(cudaDeviceSynchronize());  // Đồng bộ hóa để đảm bảo kernel đã hoàn thành
 
-            float* gradient = new float[layer3->output_size];
-            CHECK(cudaMemcpy(gradient, d_loss, sizeof(float) * layer3->output_size, cudaMemcpyDeviceToHost));
+            // float* gradient = new float[layer3->output_size];
+            // CHECK(cudaMemcpy(gradient, d_loss, sizeof(float) * layer3->output_size, cudaMemcpyDeviceToHost));
 
             // Backward pass
             // backward(train_input, gradient, batch_size);
