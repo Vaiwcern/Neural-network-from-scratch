@@ -83,7 +83,7 @@ __global__ void cross_entropy_loss_kernel(float* output, float* target, float* l
         // Tính toán mất mát (loss) cho mỗi phần tử (cross-entropy)
         float result = -target[idx] * log(output[idx]);  // Tính mất mát cho phần tử idx
         atomicAdd(loss, result);  // Cộng dồn mất mát
-        gradient[idx] = output[idx] - target[idx];  // Gradient cho Cross-Entropy loss (sau softmax)
+        // gradient[idx] = output[idx] - target[idx];  // Gradient cho Cross-Entropy loss (sau softmax)
     }
 }
 
