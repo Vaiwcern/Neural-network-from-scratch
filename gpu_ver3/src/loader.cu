@@ -1,6 +1,7 @@
 #include "loader.h"
 #include <stdexcept>
 #include <iostream>
+#include <cuda_fp16.h>  // Thư viện hỗ trợ kiểu dữ liệu half
 
 static int32_t readInt(ifstream &f)
 {
@@ -14,7 +15,7 @@ static int32_t readInt(ifstream &f)
     return val;
 }
 
-vector<unsigned char> readIDXFile(const string &filename)
+vector<half> readIDXFile(const string &filename)
 {
     ifstream file(filename, ios::binary);
     if (!file.is_open())
@@ -30,15 +31,31 @@ vector<unsigned char> readIDXFile(const string &filename)
     {
         int rows = readInt(file);
         int cols = readInt(file);
-        vector<unsigned char> data(num_items * rows * cols);
-        file.read((char *)data.data(), data.size());
+        vector<half> data(num_items * rows * cols);
+        vector<unsigned char> raw_data(num_items * rows * cols);
+
+        // Đọc dữ liệu vào mảng raw_data
+        file.read((char *)raw_data.data(), raw_data.size());
+
+        // Chuyển dữ liệu từ unsigned char sang half
+        for (size_t i = 0; i < raw_data.size(); ++i) {
+            data[i] = __float2half(static_cast<float>(raw_data[i]) / 255.0f);  // Chuyển từ unsigned char (0-255) thành half (0.0f - 1.0f)
+        }
+
         return data;
     }
     else if (magic_number == 0x00000801)
     {
         // labels
-        vector<unsigned char> data(num_items);
-        file.read((char *)data.data(), data.size());
+        vector<half> data(num_items);
+        vector<unsigned char> raw_data(num_items);
+        file.read((char *)raw_data.data(), raw_data.size());
+
+        // Chuyển từ unsigned char (0-255) sang half
+        for (size_t i = 0; i < raw_data.size(); ++i) {
+            data[i] = __float2half(static_cast<float>(raw_data[i]) / 255.0f);  // Normalizing label to [0.0, 1.0]
+        }
+
         return data;
     }
     else {

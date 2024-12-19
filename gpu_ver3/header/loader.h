@@ -4,18 +4,21 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <cuda_fp16.h>  // Thư viện hỗ trợ kiểu dữ liệu half
 
 using namespace std;
 
+// Cấu trúc Dataset với kiểu half
 struct Dataset
 {
-    vector<unsigned char> images;
-    vector<unsigned char> labels;
+    vector<half> images;  // Chuyển từ unsigned char sang half
+    vector<unsigned char> labels;  // Vẫn giữ labels là unsigned char
     int num_samples;
     int image_size;
 };
 
+// Các phương thức load_data và readIDXFile với kiểu half
 Dataset load_data(const string &image_file_train, const string &label_file_train);
-vector<unsigned char> readIDXFile(const string &filename);
+vector<half> readIDXFile(const string &filename);  // Sử dụng half cho dữ liệu ảnh
 
 #endif // LOADER_H

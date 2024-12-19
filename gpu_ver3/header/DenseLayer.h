@@ -1,9 +1,9 @@
-// DenseLayer.h
 #ifndef DENSE_LAYER_H
 #define DENSE_LAYER_H
 
 #include "ActivationFunction.h"
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>  // Thư viện hỗ trợ kiểu dữ liệu half
 
 class DenseLayer {
 public:
@@ -11,36 +11,38 @@ public:
     int output_size;
     ActivationFunction* activation;
 
-    float *weights;         // host
-    float *biases;          // host
-    float *weight_gradients; // host
-    float *bias_gradients;   // host
+    // Thay float bằng half
+    half *weights;         // host
+    half *biases;          // host
+    half *weight_gradients; // host
+    half *bias_gradients;   // host
 
-    float *last_input;   // host
-    float *last_output;  // host
+    half *last_input;   // host
+    half *last_output;  // host
 
     // GPU buffers (device)
     // allocate once and reuse
-    float *d_input;
-    float *d_output;
-    float *d_weights;
-    float *d_biases;
-    float *d_linear_output;
-    float *d_wgrad;
-    float *d_bgrad;
-    float *d_igrad; 
-    float *d_act;
+    half *d_input;
+    half *d_output;
+    half *d_weights;
+    half *d_biases;
+    half *d_linear_output;
+    half *d_wgrad;
+    half *d_bgrad;
+    half *d_igrad; 
+    half *d_act;
 
     // max_batch được truyền vào hoặc định nghĩa sẵn
     int max_batch;
 
+    // Constructor và Destructor
     DenseLayer(int input_size, int output_size, ActivationFunction* activation, int max_batch=1024);
     ~DenseLayer();
 
-    void forward(float* input, float* output, int batch_size);
-    void backward(float* output_gradient, float* input_gradient, int batch_size);
-    void update_weights(float learning_rate, int batch_size, cudaStream_t stream);
+    // Phương thức forward, backward và update_weights sử dụng half
+    void forward(half* input, half* output, int batch_size);
+    void backward(half* output_gradient, half* input_gradient, int batch_size);
+    void update_weights(half learning_rate, int batch_size, cudaStream_t stream);
 };
 
 #endif
-
