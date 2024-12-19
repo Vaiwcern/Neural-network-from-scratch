@@ -1,7 +1,6 @@
 #include "loader.h"
 #include <stdexcept>
 #include <iostream>
-#include <cuda_fp16.h>  // Thư viện hỗ trợ kiểu dữ liệu half
 
 static int32_t readInt(ifstream &f)
 {
@@ -26,7 +25,7 @@ vector<half> readIDXFile(const string &filename)
     int magic_number = readInt(file);
     int num_items = readInt(file);
 
-    // nếu là ảnh
+    // Nếu là ảnh
     if (magic_number == 0x00000803)
     {
         int rows = readInt(file);
@@ -39,7 +38,7 @@ vector<half> readIDXFile(const string &filename)
 
         // Chuyển dữ liệu từ unsigned char sang half
         for (size_t i = 0; i < raw_data.size(); ++i) {
-            data[i] = __float2half(static_cast<float>(raw_data[i]) / 255.0f);  // Chuyển từ unsigned char (0-255) thành half (0.0f - 1.0f)
+            data[i] = __float2half((float)raw_data[i] / 255.0f);  // Chuyển từ unsigned char (0-255) thành half (0.0f - 1.0f)
         }
 
         return data;
@@ -47,15 +46,8 @@ vector<half> readIDXFile(const string &filename)
     else if (magic_number == 0x00000801)
     {
         // labels
-        vector<half> data(num_items);
-        vector<unsigned char> raw_data(num_items);
-        file.read((char *)raw_data.data(), raw_data.size());
-
-        // Chuyển từ unsigned char (0-255) sang half
-        for (size_t i = 0; i < raw_data.size(); ++i) {
-            data[i] = __float2half(static_cast<float>(raw_data[i]) / 255.0f);  // Normalizing label to [0.0, 1.0]
-        }
-
+        vector<unsigned char> data(num_items);
+        file.read((char *)data.data(), data.size());
         return data;
     }
     else {
@@ -66,9 +58,9 @@ vector<half> readIDXFile(const string &filename)
 Dataset load_data(const string &image_file_train, const string &label_file_train)
 {
     Dataset ds;
-    ds.images = readIDXFile(image_file_train);
-    ds.labels = readIDXFile(label_file_train);
+    ds.images = readIDXFile(image_file_train);  // ảnh sử dụng kiểu half
+    ds.labels = readIDXFile(label_file_train);  // nhãn vẫn giữ nguyên kiểu unsigned char
     ds.num_samples = (int)ds.labels.size();
-    ds.image_size = 28 * 28;
+    ds.image_size = 28 * 28;  // Cấu trúc ảnh có kích thước 28x28
     return ds;
 }
