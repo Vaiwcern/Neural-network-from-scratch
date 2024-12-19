@@ -52,10 +52,26 @@ void ANN::backward(float* input, float* target, int batch_size) {
 }
 
 void ANN::update_weights(int batch_size) {
-    // Chia learning rate cho batch_size như CPU code
-    layer1->update_weights(learning_rate, batch_size);
-    layer2->update_weights(learning_rate, batch_size);
-    layer3->update_weights(learning_rate, batch_size);
+    // Tạo 3 stream cho các lớp
+    cudaStream_t stream1, stream2, stream3;
+    cudaStreamCreate(&stream1);
+    cudaStreamCreate(&stream2);
+    cudaStreamCreate(&stream3);
+
+    // Gọi hàm update_weights cho từng lớp, mỗi lớp trong một stream riêng biệt
+    layer1->update_weights(learning_rate, batch_size, stream1);
+    layer2->update_weights(learning_rate, batch_size, stream2);
+    layer3->update_weights(learning_rate, batch_size, stream3);
+
+    // Đợi tất cả các stream hoàn thành
+    cudaStreamSynchronize(stream1);
+    cudaStreamSynchronize(stream2);
+    cudaStreamSynchronize(stream3);
+
+    // Hủy các stream sau khi sử dụng
+    cudaStreamDestroy(stream1);
+    cudaStreamDestroy(stream2);
+    cudaStreamDestroy(stream3);
 }
 
 void ANN::train(float* train_input, unsigned char* train_labels, int num_samples, int epochs, int batch_size) {
