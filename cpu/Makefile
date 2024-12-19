@@ -1,7 +1,7 @@
 NVCC = nvcc
 TARGET = ann_cuda
 
-SRC = main.cpp loader.cpp ann_cpu.cpp
+SRC = main.cu loader.cpp ann_cpu.cpp
 HEADERS = loader.h ann_cpu.h
 
 all: $(TARGET)

@@ -9,11 +9,49 @@
 #include <cassert>
 #include <stdexcept>
 #include <random>
+#include <cuda.h>
 
 #include "loader.h"
 #include "ann_cpu.h"
 
 using namespace std;
+
+struct GpuTimer
+{
+    cudaEvent_t start;
+    cudaEvent_t stop;
+
+    GpuTimer()
+    {
+        cudaEventCreate(&start);
+        cudaEventCreate(&stop);
+    }
+
+    ~GpuTimer()
+    {
+        cudaEventDestroy(start);
+        cudaEventDestroy(stop);
+    }
+
+    void Start()
+    {
+        cudaEventRecord(start, 0);
+        cudaEventSynchronize(start);
+    }
+
+    void Stop()
+    {
+        cudaEventRecord(stop, 0);
+    }
+
+    float Elapsed()
+    {
+        float elapsed;
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&elapsed, start, stop);
+        return elapsed;
+    }
+};
 
 int main()
 {
@@ -30,10 +68,15 @@ int main()
         AnnModel model;
         int batch_size = 32;
         float learning_rate = 0.01f;
-        int num_epochs = 5;
+        int num_epochs = 1;
 
         cout << "Starting training..." << endl;
+        GpuTimer timer;
+        timer.Start();
         train_model(model, ds_train, num_epochs, batch_size, learning_rate);
+        timer.Stop();
+
+        cout << "Training time: " << timer.Elapsed() << " ms" << endl;
 
         float final_accuracy = model.inference(ds_test, 10000);
         cout << "Accuracy on test dataset" << final_accuracy << endl;
