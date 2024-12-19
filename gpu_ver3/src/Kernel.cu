@@ -137,38 +137,10 @@ __global__ void softmax_kernel(float *input, float *output, int size) {
 
 __global__ void update_weights_kernel(float *weights, float *weight_gradients, float *biases, float *bias_gradients, float learning_rate, int input_size, int output_size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-    // Kiểm tra nếu thread đang xử lý idx hợp lệ
     if (idx < output_size) {
-        // Sử dụng shared memory để lưu trữ gradient tạm thời trong mỗi block
-        extern __shared__ float shared_weights[];
-
-        // Đảm bảo rằng không vượt quá kích thước shared memory
-        // Tối ưu cho kích thước nhỏ hơn hoặc bằng 256
-        float* shared_gradients = shared_weights + input_size; 
-
-        // Tải dữ liệu vào shared memory, mỗi thread sẽ xử lý một phần trọng số và gradient
-        for (int j = threadIdx.x; j < input_size; j += blockDim.x) {
-            shared_weights[j] = weights[idx * input_size + j];  // Cập nhật trọng số trong shared memory
-            shared_gradients[j] = weight_gradients[idx * input_size + j];  // Cập nhật gradient trong shared memory
-        }
-
-        // Đồng bộ hóa threads trong block để đảm bảo tất cả dữ liệu đã được tải vào shared memory
-        __syncthreads();
-
-        // Cập nhật trọng số và gradient trong shared memory
         for (int j = 0; j < input_size; ++j) {
-            shared_weights[j] -= learning_rate * shared_gradients[j];
+            weights[idx * input_size + j] -= learning_rate * weight_gradients[idx * input_size + j];
         }
-
-        // Cập nhật lại trọng số trong global memory
-        for (int j = threadIdx.x; j < input_size; j += blockDim.x) {
-            weights[idx * input_size + j] = shared_weights[j];  // Lưu lại trọng số đã cập nhật vào global memory
-        }
-
-        // Cập nhật bias trong global memory
-        if (threadIdx.x == 0) {  // Chỉ một thread trong block thực hiện cập nhật bias
-            biases[idx] -= learning_rate * bias_gradients[idx];
-        }
+        biases[idx] -= learning_rate * bias_gradients[idx];
     }
 }
