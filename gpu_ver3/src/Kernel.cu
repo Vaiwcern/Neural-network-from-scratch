@@ -32,7 +32,6 @@ __global__ void forward_kernel(half *input, half *output, half *weights, half *b
         int tile_size = min(output_size, input_size - i);
 
         // Tính dot product trên tile vừa load
-        // Mỗi thread xử lý neuron o, nên lấy weights tương ứng: weights[o * input_size + ...]
         for (int k = 0; k < tile_size; ++k) {
             sum = __hadd(sum, __hmul(weights[o * input_size + (i + k)], s_input[k]));
         }
@@ -42,7 +41,6 @@ __global__ void forward_kernel(half *input, half *output, half *weights, half *b
     // Ghi output
     output[b * output_size + o] = sum;
 }
-
 
 __global__ void backward_kernel(
     half *input, 
@@ -81,7 +79,6 @@ __global__ void backward_kernel(
         wgrad = __hadd(wgrad, __hmul(grad, inp));
 
         // Update input gradients with atomic operations
-        // Chuyển grad_input sang float để sử dụng với atomicAdd
         float grad_input_float = __half2float(s_weights[j]) * __half2float(grad);  // chuyển đổi từ half sang float
         atomicAdd(reinterpret_cast<float*>(&input_gradient[b * input_size + j]), grad_input_float);  // atomicAdd trên float
     }
@@ -136,7 +133,6 @@ __global__ void softmax_kernel(half *input, half *output, int size) {
         }
     }
 }
-
 
 __global__ void update_weights_kernel(half *weights, half *weight_gradients, half *biases, half *bias_gradients, half learning_rate, int input_size, int output_size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
