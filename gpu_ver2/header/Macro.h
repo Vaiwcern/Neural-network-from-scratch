@@ -4,6 +4,7 @@
 #include <cuda_runtime.h>
 #include <iostream>
 
+// Macro để kiểm tra lỗi CUDA
 #define CHECK(call)                                                            \
 {                                                                              \
     const cudaError_t error = call;                                            \
