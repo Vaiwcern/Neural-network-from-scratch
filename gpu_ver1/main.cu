@@ -42,7 +42,7 @@ int main() {
     GpuTimer timer;
     timer.Start();
     cout << "Start Training..." << endl;
-    net.train(train_images_float.data(), train_data.labels.data(), 5000, epochs, batch_size);
+    net.train(train_images_float.data(), train_data.labels.data(), 60000, epochs, batch_size);
     timer.Stop();
 
     cout << "Training time: " << timer.Elapsed() << " ms" << endl;
