@@ -81,8 +81,9 @@ __global__ void backward_kernel(
         wgrad = __hadd(wgrad, __hmul(grad, inp));
 
         // Update input gradients with atomic operations
-        half grad_input = __hmul(s_weights[j], grad);
-        atomicAdd(&input_gradient[b * input_size + j], grad_input);
+        // Chuyển grad_input sang float để sử dụng với atomicAdd
+        float grad_input_float = __half2float(s_weights[j]) * __half2float(grad);  // chuyển đổi từ half sang float
+        atomicAdd(reinterpret_cast<float*>(&input_gradient[b * input_size + j]), grad_input_float);  // atomicAdd trên float
     }
 
     // Store the computed weight gradient
@@ -94,7 +95,9 @@ __global__ void backward_kernel(
         for (int b = 0; b < batch_size; b++) {
             total_bgrad = __hadd(total_bgrad, output_gradient[b * output_size + o]);
         }
-        atomicAdd(&bias_gradients[o], total_bgrad);
+        
+        // Chuyển total_bgrad sang float để sử dụng với atomicAdd
+        atomicAdd(reinterpret_cast<float*>(&bias_gradients[o]), __half2float(total_bgrad));  // atomicAdd trên float
     }
 }
 
