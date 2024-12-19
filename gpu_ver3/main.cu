@@ -46,7 +46,7 @@ int main() {
     timer.Start();
     cout << "Start Training..." << endl;
 
-    // Huấn luyện mô hình với dữ liệu ảnh kiểu half
+    // Huấn luyện mô hình với dữ liệu half
     net.train(train_images_half.data(), train_data.labels.data(), 60000, epochs, batch_size);
 
     timer.Stop();
