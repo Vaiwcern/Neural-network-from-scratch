@@ -2,13 +2,13 @@ TARGET = ann
 NVCC = nvcc
 CXXFLAGS = -std=c++11 -Iheader
 
-SRCS = main.cu src/ActivationFunction.cu src/ANN.cu src/DenseLayer.cu src/Kernel.cu src/loader.cpp
+SRCS = main.cu src/ActivationFunction.cu src/ANN.cu src/DenseLayer.cu src/Kernel.cu src/loader.cu src/Macro.cu
 OBJS = $(SRCS:.cu=.o)
 
-all: $(TARGET)
+all: $(TARGET) 
 
 $(TARGET): $(OBJS)
-	$(NVCC) $(CXXFLAGS) -o $@ $^
+	$(NVCC) $(CXXFLAGS) -o $@ $^ && ./$(TARGET)
 
 %.o: %.cu
 	$(NVCC) $(CXXFLAGS) -c $< -o $@

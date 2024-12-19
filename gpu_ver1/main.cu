@@ -2,6 +2,7 @@
 #include <vector>
 #include "ANN.h"
 #include "loader.h"
+#include "Macro.h"
 
 using namespace std;
 
@@ -35,11 +36,16 @@ int main() {
 
     ANN net(input_size, hidden_size, output_size, learning_rate);
 
-    int epochs = 5;      // Tăng số epoch để train thực sự
-    int batch_size = 32;  
+    int epochs = 1;      // Tăng số epoch để train thực sự
+    int batch_size = 32; // Batch size
 
+    GpuTimer timer;
+    timer.Start();
     cout << "Start Training..." << endl;
-    net.train(train_images_float.data(), train_data.labels.data(), train_data.num_samples, epochs, batch_size);
+    net.train(train_images_float.data(), train_data.labels.data(), 5000, epochs, batch_size);
+    timer.Stop();
+
+    cout << "Training time: " << timer.Elapsed() << " ms" << endl;
 
     cout << "Evaluate on Test set..." << endl;
     net.eval(test_images_float.data(), test_data.labels.data(), test_data.num_samples);
