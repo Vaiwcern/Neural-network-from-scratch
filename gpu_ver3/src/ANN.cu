@@ -8,7 +8,7 @@
 #include <cuda_fp16.h>  // Thư viện hỗ trợ kiểu dữ liệu half
 
 // Constructor
-ANN::ANN(int input_size, int hidden_size, int output_size, float learning_rate) {
+ANN::ANN(int input_size, int hidden_size, int output_size, half learning_rate) {
     // Tạo các layer với activation tương ứng
     layer1 = new DenseLayer(input_size, hidden_size, new ReLU());
     layer2 = new DenseLayer(hidden_size, hidden_size, new ReLU());
