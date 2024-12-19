@@ -117,7 +117,7 @@ void DenseLayer::backward(float* output_gradient, float* input_gradient, int bat
 }
 
 // Update weights
-void DenseLayer::update_weights(float learning_rate, int batch_size, cudaStream_t stream) {
+void DenseLayer::update_weights(float learning_rate, int batch_size) {
     float lr = learning_rate / (float)batch_size;
 
     float *d_weights, *d_weight_gradients, *d_biases, *d_bias_gradients;
@@ -126,23 +126,23 @@ void DenseLayer::update_weights(float learning_rate, int batch_size, cudaStream_
     CHECK(cudaMalloc(&d_biases, output_size * sizeof(float)));
     CHECK(cudaMalloc(&d_bias_gradients, output_size * sizeof(float)));
 
-    CHECK(cudaMemcpyAsync(d_weights, weights, input_size * output_size * sizeof(float), cudaMemcpyHostToDevice, stream));
-    CHECK(cudaMemcpyAsync(d_weight_gradients, weight_gradients, input_size * output_size * sizeof(float), cudaMemcpyHostToDevice, stream));
-    CHECK(cudaMemcpyAsync(d_biases, biases, output_size * sizeof(float), cudaMemcpyHostToDevice, stream));
-    CHECK(cudaMemcpyAsync(d_bias_gradients, bias_gradients, output_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+    CHECK(cudaMemcpy(d_weights, weights, input_size * output_size * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(d_weight_gradients, weight_gradients, input_size * output_size * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(d_biases, biases, output_size * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(d_bias_gradients, bias_gradients, output_size * sizeof(float), cudaMemcpyHostToDevice));
 
     int blocks = (output_size + 255) / 256;
-    update_weights_kernel<<<blocks, 256, 0, stream>>>(d_weights, d_weight_gradients, d_biases, d_bias_gradients, lr, input_size, output_size);
+    update_weights_kernel<<<blocks, 256>>>(d_weights, d_weight_gradients, d_biases, d_bias_gradients, lr, input_size, output_size);
+    CHECK(cudaDeviceSynchronize());
 
-    CHECK(cudaMemcpyAsync(weights, d_weights, input_size * output_size * sizeof(float), cudaMemcpyDeviceToHost, stream));
-    CHECK(cudaMemcpyAsync(biases, d_biases, output_size * sizeof(float), cudaMemcpyDeviceToHost, stream));
+    CHECK(cudaMemcpy(weights, d_weights, input_size * output_size * sizeof(float), cudaMemcpyDeviceToHost));
+    CHECK(cudaMemcpy(biases, d_biases, output_size * sizeof(float), cudaMemcpyDeviceToHost));
 
     CHECK(cudaFree(d_weights));
     CHECK(cudaFree(d_weight_gradients));
     CHECK(cudaFree(d_biases));
     CHECK(cudaFree(d_bias_gradients));
 }
-
 
 DenseLayer::~DenseLayer() {
     delete[] weights;
