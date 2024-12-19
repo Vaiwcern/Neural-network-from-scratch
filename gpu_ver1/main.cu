@@ -36,7 +36,7 @@ int main() {
 
     ANN net(input_size, hidden_size, output_size, learning_rate);
 
-    int epochs = 1;      // Tăng số epoch để train thực sự
+    int epochs = 10;      // Tăng số epoch để train thực sự
     int batch_size = 32; // Batch size
 
     GpuTimer timer;
