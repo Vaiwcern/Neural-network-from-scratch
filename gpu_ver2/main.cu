@@ -7,7 +7,6 @@
 using namespace std;
 
 int main() {
-    // Đường dẫn file dữ liệu MNIST
     string image_file_train = "../data/train-images-idx3-ubyte";
     string label_file_train = "../data/train-labels-idx1-ubyte";
     string image_file_test = "../data/t10k-images-idx3-ubyte";
@@ -36,13 +35,13 @@ int main() {
 
     ANN net(input_size, hidden_size, output_size, learning_rate);
 
-    int epochs = 1;      // Tăng số epoch để train thực sự
-    int batch_size = 32; // Batch size
+    int epochs = 1;      
+    int batch_size = 32; 
 
     GpuTimer timer;
     timer.Start();
     cout << "Start Training..." << endl;
-    net.train(train_images_float.data(), train_data.labels.data(), 30000, epochs, batch_size);
+    net.train(train_images_float.data(), train_data.labels.data(), 60000, epochs, batch_size);
     timer.Stop();
 
     cout << "Training time: " << timer.Elapsed() << " ms" << endl;
