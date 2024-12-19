@@ -35,7 +35,7 @@ int main() {
 
     ANN net(input_size, hidden_size, output_size, learning_rate);
 
-    int epochs = 1;      
+    int epochs = 10;      
     int batch_size = 32; 
 
     GpuTimer timer;
