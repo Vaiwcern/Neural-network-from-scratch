@@ -3,6 +3,7 @@
 #include "ANN.h"
 #include "loader.h"
 #include "Macro.h"
+#include <cuda_fp16.h>  // Thêm thư viện để làm việc với half precision
 
 using namespace std;
 
@@ -17,15 +18,19 @@ int main() {
     Dataset test_data = load_data(image_file_test, label_file_test);
 
     // Chuyển đổi ảnh từ unsigned char [0..255] về float [0..1]
-    vector<float> train_images_float(train_data.images.size());
+    vector<half> train_images_half(train_data.images.size());
     for (size_t i = 0; i < train_data.images.size(); i++) {
-        train_images_float[i] = (float)train_data.images[i] / 255.0f;
+        train_images_half[i] = __float2half((float)train_data.images[i] / 255.0f);
     }
 
-    vector<float> test_images_float(test_data.images.size());
+    vector<half> test_images_half(test_data.images.size());
     for (size_t i = 0; i < test_data.images.size(); i++) {
-        test_images_float[i] = (float)test_data.images[i] / 255.0f;
+        test_images_half[i] = __float2half((float)test_data.images[i] / 255.0f);
     }
+
+    // Chuyển đổi nhãn từ unsigned char về float16 (half)
+    vector<unsigned char> train_labels = train_data.labels;
+    vector<unsigned char> test_labels = test_data.labels;
 
     // Khởi tạo mô hình ANN
     int input_size = 28*28;
@@ -35,19 +40,19 @@ int main() {
 
     ANN net(input_size, hidden_size, output_size, learning_rate);
 
-    int epochs = 1;      
+    int epochs = 10;      
     int batch_size = 32; 
 
     GpuTimer timer;
     timer.Start();
     cout << "Start Training..." << endl;
-    net.train(train_images_float.data(), train_data.labels.data(), 60000, epochs, batch_size);
+    net.train(train_images_half.data(), train_labels.data(), 60000, epochs, batch_size);  // Gọi hàm train với kiểu half
     timer.Stop();
 
     cout << "Training time: " << timer.Elapsed() << " ms" << endl;
 
     cout << "Evaluate on Test set..." << endl;
-    net.eval(test_images_float.data(), test_data.labels.data(), test_data.num_samples);
+    net.eval(test_images_half.data(), test_labels.data(), test_data.num_samples);  // Gọi hàm eval với kiểu half
 
     return 0;
 }

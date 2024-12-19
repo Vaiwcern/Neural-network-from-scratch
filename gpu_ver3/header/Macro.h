@@ -3,7 +3,6 @@
 
 #include <cuda_runtime.h>
 #include <iostream>
-#include <cuda_fp16.h>  // Thư viện hỗ trợ kiểu dữ liệu half
 
 // Macro để kiểm tra lỗi CUDA
 #define CHECK(call)                                                            \
