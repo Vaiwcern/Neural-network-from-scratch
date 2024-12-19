@@ -7,10 +7,10 @@
 using namespace std;
 
 int main() {
-    string image_file_train = "./data/train-images-idx3-ubyte";
-    string label_file_train = "./data/train-labels-idx1-ubyte";
-    string image_file_test = "./data/t10k-images-idx3-ubyte";
-    string label_file_test = "./data/t10k-labels-idx1-ubyte";
+    string image_file_train = "../data/train-images-idx3-ubyte";
+    string label_file_train = "../data/train-labels-idx1-ubyte";
+    string image_file_test = "../data/t10k-images-idx3-ubyte";
+    string label_file_test = "../data/t10k-labels-idx1-ubyte";
 
     cout << "Loading data..." << endl;
     Dataset train_data = load_data(image_file_train, label_file_train);
