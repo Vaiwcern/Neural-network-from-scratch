@@ -32,23 +32,29 @@ int main() {
     int input_size = 28 * 28;
     int hidden_size = 128;
     int output_size = 10;
-    half learning_rate = __float2half(0.01f);  // Chuyển learning rate sang half
 
+    // Chuyển learning rate sang half
+    half learning_rate = __float2half(0.01f);
+
+    // Khởi tạo ANN
     ANN net(input_size, hidden_size, output_size, learning_rate);
 
-    int epochs = 10;      
-    int batch_size = 32; 
+    int epochs = 10;
+    int batch_size = 32;
 
     GpuTimer timer;
     timer.Start();
     cout << "Start Training..." << endl;
-    net.train(train_images_half.data(), train_data.labels.data(), 60000, epochs, batch_size);  // Sử dụng dữ liệu half
-    timer.Stop();
 
+    // Huấn luyện mô hình với dữ liệu half
+    net.train(train_images_half.data(), train_data.labels.data(), 60000, epochs, batch_size);
+
+    timer.Stop();
     cout << "Training time: " << timer.Elapsed() << " ms" << endl;
 
     cout << "Evaluate on Test set..." << endl;
-    net.eval(test_images_half.data(), test_data.labels.data(), test_data.num_samples);  // Sử dụng dữ liệu half
+    // Đánh giá mô hình trên bộ dữ liệu kiểm tra
+    net.eval(test_images_half.data(), test_data.labels.data(), test_data.num_samples);
 
     return 0;
 }

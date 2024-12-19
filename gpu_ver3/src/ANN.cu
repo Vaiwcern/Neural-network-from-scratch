@@ -8,13 +8,13 @@
 #include <cuda_fp16.h>  // Thư viện hỗ trợ kiểu dữ liệu half
 
 // Constructor
-ANN::ANN(int input_size, int hidden_size, int output_size, float learning_rate) {
+ANN::ANN(int input_size, int hidden_size, int output_size, half learning_rate) {
     // Tạo các layer với activation tương ứng
     layer1 = new DenseLayer(input_size, hidden_size, new ReLU());
     layer2 = new DenseLayer(hidden_size, hidden_size, new ReLU());
     layer3 = new DenseLayer(hidden_size, output_size, new Softmax());
 
-    this->learning_rate = __float2half(learning_rate);  // Chuyển đổi learning_rate sang half
+    this->learning_rate = learning_rate;  // Không cần chuyển đổi nữa vì learning_rate đã là half
 }
 
 void ANN::forward(half* input, half* output, int batch_size) {
@@ -29,7 +29,6 @@ void ANN::forward(half* input, half* output, int batch_size) {
 
 void ANN::backward(half* input, half* target, int batch_size) {
     // Với Softmax + CrossEntropy: dOutput = output - target
-    // Không chia batch_size ở đây, giống code CPU
     half* output_gradient = new half[layer3->output_size * batch_size];
     for (int i = 0; i < layer3->output_size * batch_size; i++) {
         output_gradient[i] = __hsub(layer3->last_output[i], target[i]);  // Sử dụng phép trừ với half
@@ -109,7 +108,7 @@ void ANN::train(half* train_input, unsigned char* train_labels, int num_samples,
             float loss = 0.0f;
             for (int b = 0; b < batch_size; b++) {
                 float pred_for_label = (float)__half2float(batch_output[b * layer3->output_size + label_batch[b]]);
-                loss -= logf(pred_for_label + 1e-9f);
+                loss -= logf(pred_for_label + 1e-9f);  // Lưu ý: Cần sử dụng logf với float
             }
             loss /= batch_size;
             epoch_loss += loss;

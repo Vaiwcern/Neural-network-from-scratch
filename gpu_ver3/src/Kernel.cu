@@ -32,7 +32,6 @@ __global__ void forward_kernel(half *input, half *output, half *weights, half *b
         int tile_size = min(output_size, input_size - i);
 
         // Tính dot product trên tile vừa load
-        // Mỗi thread xử lý neuron o, nên lấy weights tương ứng: weights[o * input_size + ...]
         for (int k = 0; k < tile_size; ++k) {
             sum = __hadd(sum, __hmul(weights[o * input_size + (i + k)], s_input[k]));
         }
@@ -42,7 +41,6 @@ __global__ void forward_kernel(half *input, half *output, half *weights, half *b
     // Ghi output
     output[b * output_size + o] = sum;
 }
-
 
 __global__ void backward_kernel(
     half *input, 
@@ -55,48 +53,68 @@ __global__ void backward_kernel(
     int output_size, 
     int batch_size
 ) {
-    // Each block handles one output neuron
+    // Mỗi block xử lý một neuron output
     int o = blockIdx.x;
     if (o >= output_size) return;
 
-    // Each thread handles one input neuron
+    // Mỗi thread xử lý một neuron input
     int j = threadIdx.x;
     if (j >= input_size) return;
 
-    // Shared memory for weights of the current output neuron
+    // Shared memory cho weights của output neuron hiện tại
     extern __shared__ half s_weights[];
 
-    // Load weights into shared memory
+    // Load weights vào shared memory
     if (j < input_size) {
         s_weights[j] = weights[o * input_size + j];
     }
     __syncthreads();
 
-    half wgrad = __float2half(0.0f);
+    half wgrad = __float2half(0.0f);  // Gradient của weights
 
-    // Compute weight gradients and accumulate bias gradients
+    // Tính toán gradient weights và tích lũy gradient bias
     for (int b = 0; b < batch_size; b++) {
         half grad = output_gradient[b * output_size + o];
         half inp = input[b * input_size + j];
         wgrad = __hadd(wgrad, __hmul(grad, inp));
 
-        // Update input gradients with atomic operations
-        half grad_input = __hmul(s_weights[j], grad);
-        atomicAdd(&input_gradient[b * input_size + j], grad_input);
+        // Tạo biến tạm kiểu float để sử dụng với atomicAdd
+        float grad_input_float = __half2float(s_weights[j]) * __half2float(grad);  // chuyển từ half sang float
+
+        // Tạo biến y kiểu float để sử dụng atomicAdd
+        float temp_y = 0.0f; // Biến tạm kiểu float
+
+        // AtomicAdd vào biến tạm y
+        atomicAdd(&temp_y, grad_input_float);
+
+        // Chuyển y từ float về half
+        half grad_input_half = __float2half(temp_y);
+
+        // Sao chép giá trị từ y (half) vào input_gradient (kiểu half)
+        input_gradient[b * input_size + j] = grad_input_half;
     }
 
-    // Store the computed weight gradient
+    // Lưu gradient weights tính toán
     weight_gradients[o * input_size + j] = wgrad;
 
-    // Compute and store bias gradient (only once per output neuron)
+    // Tính toán và lưu gradient bias (chỉ thực hiện một lần cho mỗi output neuron)
     if (j == 0) {
         half total_bgrad = __float2half(0.0f);
         for (int b = 0; b < batch_size; b++) {
             total_bgrad = __hadd(total_bgrad, output_gradient[b * output_size + o]);
         }
-        atomicAdd(&bias_gradients[o], total_bgrad);
+        
+        // Tạo biến tạm kiểu float để sử dụng với atomicAdd
+        float temp_bgrad = __half2float(total_bgrad);  // chuyển từ half sang float
+
+        // AtomicAdd vào biến tạm b
+        atomicAdd(&temp_bgrad, __half2float(total_bgrad));
+
+        // Chuyển temp_bgrad về kiểu half trước khi lưu
+        bias_gradients[o] = __float2half(temp_bgrad);  // atomicAdd trên float, sau đó chuyển lại thành half
     }
 }
+
 
 __global__ void relu_kernel(half *input, half *output, int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -133,7 +151,6 @@ __global__ void softmax_kernel(half *input, half *output, int size) {
         }
     }
 }
-
 
 __global__ void update_weights_kernel(half *weights, half *weight_gradients, half *biases, half *bias_gradients, half learning_rate, int input_size, int output_size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;

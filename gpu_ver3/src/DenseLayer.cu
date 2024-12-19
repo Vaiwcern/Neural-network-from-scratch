@@ -64,11 +64,6 @@ void DenseLayer::forward(half *input, half *output, int batch_size)
     CHECK(cudaDeviceSynchronize());
 
     // linear_output đã ở d_linear_output, apply activation trên host hoặc device
-    // Ở đây ta làm activation trên host->device->host không hiệu quả,
-    // ta nên implement activation kernel và gọi trực tiếp trên device.
-    // Giả sử activation->activate(...) đã sử dụng kernel như ReLU hay softmax:
-    // Ta gọi thẳng activation kernel trên d_linear_output -> d_output
-
     if (dynamic_cast<ReLU *>(activation))
     {
         int size = output_size * batch_size;
@@ -102,7 +97,6 @@ void DenseLayer::backward(half *output_gradient, half *input_gradient, int batch
     int size = output_size * batch_size;
     int threads = 256;
     int blocks = (size + threads - 1) / threads;
-    // Chúng ta đã có last_output trên host, cần copy lên device để derivative.
     CHECK(cudaMemcpy(d_output, last_output, output_size * batch_size * sizeof(half), cudaMemcpyHostToDevice));
     relu_derivative_kernel<<<blocks, threads>>>(d_output, d_act, size);
     CHECK(cudaDeviceSynchronize());
