@@ -68,9 +68,10 @@ __global__ void softmax_kernel(half *input, half *output, int size) {
 
         half sum_exp = __float2half(0.0f);
         for (int i = 0; i < size; i++) {
-            half val = __hexp(__hsub(input[i], max_val));
-            output[i] = val;
-            sum_exp = __hadd(sum_exp, val);
+            // Chuyển đổi input[i] thành float, tính exp, rồi chuyển lại thành half
+            float val = expf(__half2float(input[i]) - __half2float(max_val));
+            output[i] = __float2half(val);  // Chuyển kết quả exp trở lại half
+            sum_exp = __hadd(sum_exp, output[i]);
         }
 
         for (int i = 0; i < size; i++) {
@@ -78,6 +79,7 @@ __global__ void softmax_kernel(half *input, half *output, int size) {
         }
     }
 }
+
 
 __global__ void update_weights_kernel(half *weights, half *weight_gradients, half *biases, half *bias_gradients, float learning_rate, int input_size, int output_size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
