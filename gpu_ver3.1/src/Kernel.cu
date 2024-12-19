@@ -156,5 +156,3 @@ __global__ void compute_input_gradient_kernel(
 
     input_gradient[b * input_size + j] = grad_input;
 }
-
-#endif
