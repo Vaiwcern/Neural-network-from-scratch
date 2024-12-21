@@ -3,7 +3,6 @@
 #include "ANN.h"
 #include "loader.h"
 #include "Macro.h"
-#include <cuda_fp16.h>  // Thêm thư viện để làm việc với half precision
 
 using namespace std;
 
@@ -18,19 +17,15 @@ int main() {
     Dataset test_data = load_data(image_file_test, label_file_test);
 
     // Chuyển đổi ảnh từ unsigned char [0..255] về float [0..1]
-    vector<half> train_images_half(train_data.images.size());
+    vector<float> train_images_float(train_data.images.size());
     for (size_t i = 0; i < train_data.images.size(); i++) {
-        train_images_half[i] = __float2half((float)train_data.images[i] / 255.0f);
+        train_images_float[i] = (float)train_data.images[i] / 255.0f;
     }
 
-    vector<half> test_images_half(test_data.images.size());
+    vector<float> test_images_float(test_data.images.size());
     for (size_t i = 0; i < test_data.images.size(); i++) {
-        test_images_half[i] = __float2half((float)test_data.images[i] / 255.0f);
+        test_images_float[i] = (float)test_data.images[i] / 255.0f;
     }
-
-    // Chuyển đổi nhãn từ unsigned char về float16 (half)
-    vector<unsigned char> train_labels = train_data.labels;
-    vector<unsigned char> test_labels = test_data.labels;
 
     // Khởi tạo mô hình ANN
     int input_size = 28*28;
@@ -46,13 +41,13 @@ int main() {
     GpuTimer timer;
     timer.Start();
     cout << "Start Training..." << endl;
-    net.train(train_images_half.data(), train_labels.data(), 60000, epochs, batch_size);  // Gọi hàm train với kiểu half
+    net.train(train_images_float.data(), train_data.labels.data(), 60000, epochs, batch_size);
     timer.Stop();
 
     cout << "Training time: " << timer.Elapsed() << " ms" << endl;
 
     cout << "Evaluate on Test set..." << endl;
-    net.eval(test_images_half.data(), test_labels.data(), test_data.num_samples);  // Gọi hàm eval với kiểu half
+    net.eval(test_images_float.data(), test_data.labels.data(), test_data.num_samples);
 
     return 0;
 }

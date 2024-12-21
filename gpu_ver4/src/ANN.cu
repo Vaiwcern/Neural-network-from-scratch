@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
-#include <cuda_fp16.h>  // Thêm thư viện để làm việc với half precision
 
 // Constructor
 ANN::ANN(int input_size, int hidden_size, int output_size, float learning_rate) {
@@ -17,26 +16,26 @@ ANN::ANN(int input_size, int hidden_size, int output_size, float learning_rate) 
     this->learning_rate = learning_rate;
 }
 
-void ANN::forward(half* input, half* output, int batch_size) {
+void ANN::forward(float* input, float* output, int batch_size) {
     // Forward qua các layers
     layer1->forward(input, layer1->last_output, batch_size);
     layer2->forward(layer1->last_output, layer2->last_output, batch_size);
     layer3->forward(layer2->last_output, layer3->last_output, batch_size);
 
     // Sao chép output
-    memcpy(output, layer3->last_output, layer3->output_size * batch_size * sizeof(half));
+    memcpy(output, layer3->last_output, layer3->output_size * batch_size * sizeof(float));
 }
 
-void ANN::backward(half* input, half* target, int batch_size) {
+void ANN::backward(float* input, float* target, int batch_size) {
     // Với Softmax + CrossEntropy: dOutput = output - target
     // Không chia batch_size ở đây, giống code CPU
-    half* output_gradient = new half[layer3->output_size * batch_size];
+    float* output_gradient = new float[layer3->output_size * batch_size];
     for (int i = 0; i < layer3->output_size * batch_size; i++) {
-        output_gradient[i] = __float2half(__half2float(layer3->last_output[i]) - __half2float(target[i])); // Không chia batch_size
+        output_gradient[i] = (layer3->last_output[i] - target[i]); // Không chia batch_size
     }
 
-    half* grad2 = new half[layer2->output_size * batch_size]; // gradient cho layer2 output
-    half* grad1 = new half[layer1->output_size * batch_size]; // gradient cho layer1 output
+    float* grad2 = new float[layer2->output_size * batch_size]; // gradient cho layer2 output
+    float* grad1 = new float[layer1->output_size * batch_size]; // gradient cho layer1 output
 
     // Backward qua layer3
     layer3->backward(output_gradient, grad2, batch_size);
@@ -75,14 +74,14 @@ void ANN::update_weights(int batch_size) {
     cudaStreamDestroy(stream3);
 }
 
-void ANN::train(half* train_input, unsigned char* train_labels, int num_samples, int epochs, int batch_size) {
+void ANN::train(float* train_input, unsigned char* train_labels, int num_samples, int epochs, int batch_size) {
     int steps_per_epoch = num_samples / batch_size;
     std::cout << "[TRAIN] Starting training..." << std::endl;
     std::cout << "[TRAIN] Num samples: " << num_samples << ", Batch size: " << batch_size 
               << ", Steps per epoch: " << steps_per_epoch << ", Epochs: " << epochs << std::endl;
 
-    half* batch_output = new half[layer3->output_size * batch_size];
-    half* batch_target = new half[layer3->output_size * batch_size];
+    float* batch_output = new float[layer3->output_size * batch_size];
+    float* batch_target = new float[layer3->output_size * batch_size];
 
     for (int epoch = 0; epoch < epochs; ++epoch) {
         float epoch_loss = 0.0f;
@@ -91,7 +90,7 @@ void ANN::train(half* train_input, unsigned char* train_labels, int num_samples,
         std::cout << "[TRAIN] Epoch " << (epoch+1) << " started." << std::endl;
 
         for (int step = 0; step < steps_per_epoch; step++) {
-            half* input_batch = &train_input[step * batch_size * layer1->input_size];
+            float* input_batch = &train_input[step * batch_size * layer1->input_size];
             unsigned char* label_batch = &train_labels[step * batch_size];
 
             // Forward
@@ -100,15 +99,15 @@ void ANN::train(half* train_input, unsigned char* train_labels, int num_samples,
             // Tạo one-hot target
             for (int b = 0; b < batch_size; b++) {
                 for (int i = 0; i < layer3->output_size; i++) {
-                    batch_target[b * layer3->output_size + i] = __float2half(0.0f);
+                    batch_target[b * layer3->output_size + i] = 0.0f;
                 }
-                batch_target[b * layer3->output_size + label_batch[b]] = __float2half(1.0f);
+                batch_target[b * layer3->output_size + label_batch[b]] = 1.0f;
             }
 
             // Compute loss
             float loss = 0.0f;
             for (int b = 0; b < batch_size; b++) {
-                float pred_for_label = __half2float(batch_output[b * layer3->output_size + label_batch[b]]);
+                float pred_for_label = batch_output[b * layer3->output_size + label_batch[b]];
                 loss -= logf(pred_for_label + 1e-9f);
             }
             loss /= batch_size;
@@ -144,10 +143,10 @@ void ANN::train(half* train_input, unsigned char* train_labels, int num_samples,
     std::cout << "[TRAIN] Training finished." << std::endl;
 }
 
-void ANN::eval(half* test_input, unsigned char* test_labels, int test_size) {
+void ANN::eval(float* test_input, unsigned char* test_labels, int test_size) {
     int correct_predictions = 0;
     for (int i = 0; i < test_size; i++) {
-        half* output = new half[layer3->output_size];
+        float* output = new float[layer3->output_size];
         forward(&test_input[i * layer1->input_size], output, 1);
 
         int predicted_label = (int)std::distance(output, std::max_element(output, output + layer3->output_size));

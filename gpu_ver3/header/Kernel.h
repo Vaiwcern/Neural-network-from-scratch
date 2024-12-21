@@ -20,23 +20,4 @@ __global__ void backward_kernel(float *input, float *output_gradient, float *wei
 // Update trọng số
 __global__ void update_weights_kernel(float *weights, float *weight_gradients, float *biases, float *bias_gradients, float learning_rate, int input_size, int output_size);
 
-__global__ void compute_input_gradient_kernel(
-    float *output_gradient, 
-    float *weights, 
-    float *input_gradient, 
-    int input_size, 
-    int output_size, 
-    int batch_size
-);
-
-__global__ void compute_weight_bias_gradients_kernel(
-    float *input, 
-    float *output_gradient, 
-    float *weights, 
-    float *weight_gradients, 
-    float *bias_gradients, 
-    int input_size, 
-    int output_size, 
-    int batch_size
-);
 #endif

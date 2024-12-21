@@ -39,7 +39,7 @@ public:
 
     void forward(float* input, float* output, int batch_size);
     void backward(float* output_gradient, float* input_gradient, int batch_size);
-    void update_weights(float learning_rate, int batch_size, cudaStream_t stream);
+    void update_weights(float learning_rate, int batch_size);
 };
 
 #endif
