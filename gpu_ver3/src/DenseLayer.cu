@@ -21,7 +21,7 @@ DenseLayer::DenseLayer(int input_size, int output_size, ActivationFunction *acti
     std::mt19937 gen(rd());
     std::normal_distribution<float> dist(0.0f, sqrtf(2.0f / input_size));
 
-    for (int k = 0; k < input_size; ++k) {
+    for (int k = 0; k < input_size * output_size; ++k) {
         for (int i = 0; i < output_size; ++i)
         {
             for (int j = 0; j < input_size; ++j)
