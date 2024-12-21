@@ -33,12 +33,13 @@ int main() {
     int output_size = 10;
     float learning_rate = 0.01f;
 
+    ANN net(input_size, hidden_size, output_size, learning_rate);
+
     int epochs = 10;      
     int batch_size = 32; 
 
     GpuTimer timer;
     timer.Start();
-    ANN net(input_size, hidden_size, output_size, learning_rate);
     cout << "Start Training..." << endl;
     net.train(train_images_float.data(), train_data.labels.data(), 60000, epochs, batch_size);
     timer.Stop();

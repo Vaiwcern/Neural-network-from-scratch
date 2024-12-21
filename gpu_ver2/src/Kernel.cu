@@ -1,17 +1,100 @@
 #include "Kernel.h"
 #include <cmath>
 
-__global__ void forward_kernel(float *input, float *output, float *weights, float *biases, int input_size, int output_size, int batch_size) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < output_size * batch_size) {
-        int b = idx / output_size;
-        int o = idx % output_size;
 
-        float sum = biases[o];
-        for (int j = 0; j < input_size; ++j) {
-            sum += weights[o * input_size + j] * input[b * input_size + j];
+__global__ void forward_kernel(float *input, float *output, float *weights, float *biases, 
+                               int input_size, int output_size, int batch_size) {
+    // Mỗi block xử lý một sample (b)
+    int b = blockIdx.x;
+    if (b >= batch_size) return;
+
+    // Mỗi thread xử lý một neuron output (o)
+    int o = threadIdx.x;
+    if (o >= output_size) return;
+
+    // Shared memory để lưu tile input
+    extern __shared__ float s_input[];
+
+    float sum = biases[o];
+
+    // Chia input_size thành từng tile có kích thước = output_size (hoặc nhỏ hơn ở tile cuối)
+    for (int i = 0; i < input_size; i += output_size) {
+        int idx = i + o;
+        float val = 0.0f;
+        if (idx < input_size) {
+            val = input[b * input_size + idx];
         }
-        output[idx] = sum;  
+
+        // Load giá trị input vào shared memory
+        s_input[o] = val;
+        __syncthreads();
+
+        int tile_size = min(output_size, input_size - i);
+
+        // Tính dot product trên tile vừa load
+        // Mỗi thread xử lý neuron o, nên lấy weights tương ứng: weights[o * input_size + ...]
+        for (int k = 0; k < tile_size; ++k) {
+            sum += weights[o * input_size + (i + k)] * s_input[k];
+        }
+        __syncthreads();
+    }
+
+    // Ghi output
+    output[b * output_size + o] = sum;
+}
+
+
+__global__ void backward_kernel(
+    float *input, 
+    float *output_gradient, 
+    float *weights, 
+    float *weight_gradients, 
+    float *bias_gradients, 
+    float *input_gradient,
+    int input_size, 
+    int output_size, 
+    int batch_size
+) {
+    // Each block handles one output neuron
+    int o = blockIdx.x;
+    if (o >= output_size) return;
+
+    // Each thread handles one input neuron
+    int j = threadIdx.x;
+    if (j >= input_size) return;
+
+    // Shared memory for weights of the current output neuron
+    extern __shared__ float s_weights[];
+
+    // Load weights into shared memory
+    if (j < input_size) {
+        s_weights[j] = weights[o * input_size + j];
+    }
+    __syncthreads();
+
+    float wgrad = 0.0f;
+
+    // Compute weight gradients and accumulate bias gradients
+    for (int b = 0; b < batch_size; b++) {
+        float grad = output_gradient[b * output_size + o];
+        float inp = input[b * input_size + j];
+        wgrad += grad * inp;
+
+        // Update input gradients with atomic operations
+        float grad_input = s_weights[j] * grad;
+        atomicAdd(&input_gradient[b * input_size + j], grad_input);
+    }
+
+    // Store the computed weight gradient
+    weight_gradients[o * input_size + j] = wgrad;
+
+    // Compute and store bias gradient (only once per output neuron)
+    if (j == 0) {
+        float total_bgrad = 0.0f;
+        for (int b = 0; b < batch_size; b++) {
+            total_bgrad += output_gradient[b * output_size + o];
+        }
+        atomicAdd(&bias_gradients[o], total_bgrad);
     }
 }
 
@@ -51,24 +134,6 @@ __global__ void softmax_kernel(float *input, float *output, int size) {
     }
 }
 
-__global__ void backward_kernel(float *input, float *output_gradient, float *weights, 
-                                float *weight_gradients, float *bias_gradients, float *input_gradient,
-                                int input_size, int output_size, int batch_size) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < output_size * batch_size) {
-        int b = idx / output_size;
-        int o = idx % output_size;
-
-        float grad = output_gradient[idx]; 
-        atomicAdd(&bias_gradients[o], grad);
-
-        for (int j = 0; j < input_size; ++j) {
-            float wg = grad * input[b * input_size + j];
-            atomicAdd(&weight_gradients[o * input_size + j], wg);
-            atomicAdd(&input_gradient[b * input_size + j], weights[o * input_size + j] * grad);
-        }
-    }
-}
 
 __global__ void update_weights_kernel(float *weights, float *weight_gradients, float *biases, float *bias_gradients, float learning_rate, int input_size, int output_size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;

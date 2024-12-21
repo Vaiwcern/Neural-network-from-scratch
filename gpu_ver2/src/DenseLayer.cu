@@ -21,7 +21,7 @@ DenseLayer::DenseLayer(int input_size, int output_size, ActivationFunction *acti
     std::mt19937 gen(rd());
     std::normal_distribution<float> dist(0.0f, sqrtf(2.0f / input_size));
 
-    for (int k = 0; k < output_size; ++k) {
+    for (int k = 0; k < input_size; ++k) {
         for (int i = 0; i < output_size; ++i)
         {
             for (int j = 0; j < input_size; ++j)
@@ -113,9 +113,20 @@ void DenseLayer::backward(float *output_gradient, float *input_gradient, int bat
     CHECK(cudaMemset(d_bgrad, 0, output_size * sizeof(float)));
     CHECK(cudaMemset(d_igrad, 0, input_size * batch_size * sizeof(float)));
 
-    int total_threads = output_size * batch_size;
-    int blocks_backward = (total_threads + 255) / 256;
-    backward_kernel<<<blocks_backward, 256>>>(d_input, d_act, d_weights, d_wgrad, d_bgrad, d_igrad, input_size, output_size, batch_size);
+    int backward_blocks = output_size;
+    int backward_threads = input_size;
+    size_t shared_mem_size = input_size * sizeof(float); // Shared memory for weights
+
+    backward_kernel<<<backward_blocks, backward_threads, shared_mem_size>>>(
+        d_input,
+        d_act,
+        d_weights,
+        d_wgrad,
+        d_bgrad,
+        d_igrad,
+        input_size,
+        output_size,
+        batch_size);
     CHECK(cudaDeviceSynchronize());
 
     // Copy gradients về host

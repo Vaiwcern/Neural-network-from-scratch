@@ -1,5 +1,6 @@
 #include "Macro.h"
 
+// Định nghĩa các hàm thành viên của GpuTimer
 GpuTimer::GpuTimer()
 {
     CHECK(cudaEventCreate(&start));

@@ -21,15 +21,13 @@ DenseLayer::DenseLayer(int input_size, int output_size, ActivationFunction *acti
     std::mt19937 gen(rd());
     std::normal_distribution<float> dist(0.0f, sqrtf(2.0f / input_size));
 
-    for (int k = 0; k < input_size; ++k) {
-        for (int i = 0; i < output_size; ++i)
+    for (int i = 0; i < output_size; ++i)
+    {
+        for (int j = 0; j < input_size; ++j)
         {
-            for (int j = 0; j < input_size; ++j)
-            {
-                weights[i * input_size + j] = dist(gen);
-            }
-            biases[i] = 0.0f;
+            weights[i * input_size + j] = dist(gen);
         }
+        biases[i] = 0.0f;
     }
 
     // Allocate GPU memory once
@@ -113,21 +111,49 @@ void DenseLayer::backward(float *output_gradient, float *input_gradient, int bat
     CHECK(cudaMemset(d_bgrad, 0, output_size * sizeof(float)));
     CHECK(cudaMemset(d_igrad, 0, input_size * batch_size * sizeof(float)));
 
-    int backward_blocks = output_size;
-    int backward_threads = input_size;
+    int weight_blocks = output_size;
+    int weight_threads = input_size;
     size_t shared_mem_size = input_size * sizeof(float); // Shared memory for weights
 
-    backward_kernel<<<backward_blocks, backward_threads, shared_mem_size>>>(
+    compute_weight_bias_gradients_kernel<<<weight_blocks, weight_threads, shared_mem_size>>>(
         d_input,
         d_act,
         d_weights,
         d_wgrad,
         d_bgrad,
+        input_size,
+        output_size,
+        batch_size);
+    CHECK(cudaDeviceSynchronize());
+
+    // Launch kernel to compute input gradients
+    dim3 input_blocks(batch_size);
+    dim3 input_threads(input_size);
+
+    compute_input_gradient_kernel<<<input_blocks, input_threads>>>(
+        d_act,
+        d_weights,
         d_igrad,
         input_size,
         output_size,
         batch_size);
     CHECK(cudaDeviceSynchronize());
+
+    // int backward_blocks = output_size;
+    // int backward_threads = input_size;
+    // size_t shared_mem_size = input_size * sizeof(float); // Shared memory for weights
+
+    // backward_kernel<<<backward_blocks, backward_threads, shared_mem_size>>>(
+    //     d_input,
+    //     d_act,
+    //     d_weights,
+    //     d_wgrad,
+    //     d_bgrad,
+    //     d_igrad,
+    //     input_size,
+    //     output_size,
+    //     batch_size);
+    // CHECK(cudaDeviceSynchronize());
 
     // Copy gradients về host
     CHECK(cudaMemcpy(weight_gradients, d_wgrad, input_size * output_size * sizeof(float), cudaMemcpyDeviceToHost));
@@ -140,21 +166,22 @@ void DenseLayer::backward(float *output_gradient, float *input_gradient, int bat
 }
 
 // Update weights
-void DenseLayer::update_weights(float learning_rate, int batch_size)
+void DenseLayer::update_weights(float learning_rate, int batch_size, cudaStream_t stream)
 {
-    // Copy host gradients lên GPU rồi update tại chỗ
-    CHECK(cudaMemcpy(d_wgrad, weight_gradients, input_size * output_size * sizeof(float), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(d_bgrad, bias_gradients, output_size * sizeof(float), cudaMemcpyHostToDevice));
+    // Copy host gradients to GPU asynchronously in the given stream
+    CHECK(cudaMemcpyAsync(d_wgrad, weight_gradients, input_size * output_size * sizeof(float), cudaMemcpyHostToDevice, stream));
+    CHECK(cudaMemcpyAsync(d_bgrad, bias_gradients, output_size * sizeof(float), cudaMemcpyHostToDevice, stream));
 
     int threads = 512;
     int blocks = (output_size + threads - 1) / threads;
     float lr = learning_rate / (float)batch_size;
-    update_weights_kernel<<<blocks, threads>>>(d_weights, d_wgrad, d_biases, d_bgrad, lr, input_size, output_size);
-    CHECK(cudaDeviceSynchronize());
 
-    // Copy weights, biases về host (nếu cần)
-    CHECK(cudaMemcpy(weights, d_weights, input_size * output_size * sizeof(float), cudaMemcpyDeviceToHost));
-    CHECK(cudaMemcpy(biases, d_biases, output_size * sizeof(float), cudaMemcpyDeviceToHost));
+    // Launch the kernel in the provided stream
+    update_weights_kernel<<<blocks, threads, 0, stream>>>(d_weights, d_wgrad, d_biases, d_bgrad, lr, input_size, output_size);
+
+    // Copy weights and biases back to host asynchronously (if needed)
+    CHECK(cudaMemcpyAsync(weights, d_weights, input_size * output_size * sizeof(float), cudaMemcpyDeviceToHost, stream));
+    CHECK(cudaMemcpyAsync(biases, d_biases, output_size * sizeof(float), cudaMemcpyDeviceToHost, stream));
 }
 
 DenseLayer::~DenseLayer()

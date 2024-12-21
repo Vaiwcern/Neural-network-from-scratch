@@ -26,7 +26,7 @@ __global__ void forward_kernel(float *input, float *output, float *weights, floa
         }
 
         // Load giá trị input vào shared memory
-        s_input[o] = val;
+        s_input[threadIdx.x] = val;
         __syncthreads();
 
         int tile_size = min(output_size, input_size - i);
@@ -144,3 +144,72 @@ __global__ void update_weights_kernel(float *weights, float *weight_gradients, f
         biases[idx] -= learning_rate * bias_gradients[idx];
     }
 }
+
+__global__ void compute_weight_bias_gradients_kernel(
+    float *input, 
+    float *output_gradient, 
+    float *weights, 
+    float *weight_gradients, 
+    float *bias_gradients, 
+    int input_size, 
+    int output_size, 
+    int batch_size
+) {
+    int o = blockIdx.x;
+    if (o >= output_size) return;
+
+    int j = threadIdx.x;
+    if (j >= input_size) return;
+
+    extern __shared__ float s_weights[];
+
+    if (j < input_size) {
+        s_weights[j] = weights[o * input_size + j];
+    }
+    __syncthreads();
+
+    float wgrad = 0.0f;
+
+    for (int b = 0; b < batch_size; b++) {
+        float grad = output_gradient[b * output_size + o];
+        float inp = input[b * input_size + j];
+        wgrad += grad * inp;
+    }
+
+    if (j < input_size) {
+        weight_gradients[o * input_size + j] = wgrad;
+    }
+
+    if (j == 0) {
+        float total_bgrad = 0.0f;
+        for (int b = 0; b < batch_size; b++) {
+            total_bgrad += output_gradient[b * output_size + o];
+        }
+        bias_gradients[o] = total_bgrad;
+    }
+}
+
+__global__ void compute_input_gradient_kernel(
+    float *output_gradient, 
+    float *weights, 
+    float *input_gradient, 
+    int input_size, 
+    int output_size, 
+    int batch_size
+) {
+    int b = blockIdx.x;
+    int j = threadIdx.x;
+
+    if (b >= batch_size || j >= input_size) return;
+
+    float grad_input = 0.0f;
+
+    for (int o = 0; o < output_size; o++) {
+        float w = weights[o * input_size + j];
+        float grad = output_gradient[b * output_size + o];
+        grad_input += w * grad;
+    }
+
+    input_gradient[b * input_size + j] = grad_input;
+}
+

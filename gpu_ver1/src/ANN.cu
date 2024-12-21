@@ -28,6 +28,7 @@ void ANN::forward(float* input, float* output, int batch_size) {
 
 void ANN::backward(float* input, float* target, int batch_size) {
     // Với Softmax + CrossEntropy: dOutput = output - target
+    // Không chia batch_size ở đây, giống code CPU
     float* output_gradient = new float[layer3->output_size * batch_size];
     for (int i = 0; i < layer3->output_size * batch_size; i++) {
         output_gradient[i] = (layer3->last_output[i] - target[i]); // Không chia batch_size
@@ -51,6 +52,7 @@ void ANN::backward(float* input, float* target, int batch_size) {
 }
 
 void ANN::update_weights(int batch_size) {
+    // Chia learning rate cho batch_size như CPU code
     layer1->update_weights(learning_rate, batch_size);
     layer2->update_weights(learning_rate, batch_size);
     layer3->update_weights(learning_rate, batch_size);
