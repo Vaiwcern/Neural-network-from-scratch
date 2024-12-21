@@ -68,7 +68,7 @@ int main()
         AnnModel model;
         int batch_size = 32;
         float learning_rate = 0.01f;
-        int num_epochs = 1;
+        int num_epochs = 10;
 
         cout << "Starting training..." << endl;
         GpuTimer timer;
